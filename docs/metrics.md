@@ -8,5 +8,5 @@
 | Median wait | Median minutes from arrival to service start, completed visits only |
 | P90 wait | 90th percentile of the same wait interval |
 
-Times use local clinic time. A negative wait is invalid. Rankings require at least 30 eligible rows.
+Times use local clinic time. A negative wait is invalid. Department-hour rankings require at least 50 completed visits; broader weekday-hour summaries require at least 30 appointments.
 

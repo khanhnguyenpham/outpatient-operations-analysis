@@ -15,7 +15,7 @@ The dataset is synthetic and contains no real patient information.
 ## Workflow
 
 ```text
-synthetic source -> validation -> SQLite -> SQL analysis -> report/dashboard
+synthetic source -> validation -> star-schema SQLite -> SQL analysis -> report/dashboard
 ```
 
 This repository is intentionally focused on analysis. Prediction and model serving live in a separate AI Systems project.
@@ -32,6 +32,8 @@ streamlit run dashboard.py
 
 The first command creates a reproducible dataset, validates it, loads SQLite, runs the queries in `sql/analysis.sql`, saves charts and writes `reports/generated/summary.md`.
 
+Each named SQL query is also exported to `reports/generated/query_results/`, making the SQL output easy to inspect without opening SQLite manually.
+
 ## Repository structure
 
 ```text
@@ -44,12 +46,27 @@ dashboard.py          interactive Streamlit dashboard
 run_analysis.py       one-command workflow
 ```
 
+## Review the result
+
+- [Analysis report](reports/analysis_report.md) — findings, recommendations and limitations.
+- [Metric definitions](docs/metrics.md) — exact KPI denominators.
+- [Data model](docs/data_model.md) — fact/dimension design and reconciliation.
+- [Data dictionary](docs/data_dictionary.md) — field-level meanings.
+- [SQL analysis](sql/analysis.sql) — named queries with window functions for trends, median and P90.
+
 ## Analytical choices
 
 - Median wait is reported alongside the 90th percentile because averages hide long queues.
 - Cancelled appointments are excluded from the no-show denominator.
 - Reminder results are descriptive, not causal: reminder assignment may depend on lead time.
-- Departments with fewer than 30 completed appointments in a slice are suppressed from ranking.
+- Department-hour rankings require at least 50 completed visits; weekday-hour summaries require at least 30 appointments.
+- Source, fact-table and reporting-view row counts are reconciled on every run.
+
+## Reproducible reference run
+
+With seed 42 and 6,500 appointments, the pipeline reports a 13.79% no-show rate, 27.7-minute median wait and 43.9-minute P90 wait. These values are outputs of the generator, not claims about any real hospital.
+
+![Median wait by department](docs/assets/median_wait_by_department.png)
 
 ## Limits
 

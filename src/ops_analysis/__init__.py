@@ -1,2 +1,1 @@
 """Outpatient operations analysis package."""
-
