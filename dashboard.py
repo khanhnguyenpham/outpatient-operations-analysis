@@ -162,7 +162,9 @@ with kpi_columns[2]:
     metric_card("Chờ trung vị", f"{completed['wait_minutes'].median():.1f} phút", "50% lượt khám chờ thấp hơn")
 with kpi_columns[3]:
     metric_card(
-        "Thời gian chờ P90", f"{completed['wait_minutes'].quantile(0.9):.1f} phút", "90% lượt khám chờ thấp hơn"
+        "Thời gian chờ P90",
+        f"{completed['wait_minutes'].quantile(0.9, interpolation='higher'):.1f} phút",
+        "90% lượt khám chờ thấp hơn",
     )
 
 overview_tab, wait_tab, no_show_tab, quality_tab = st.tabs(
@@ -190,7 +192,11 @@ with overview_tab:
 
     pressure = (
         completed.groupby(["department", "appointment_hour"])["wait_minutes"]
-        .agg(completed_visits="size", average_wait="mean", p90_wait=lambda values: values.quantile(0.90))
+        .agg(
+            completed_visits="size",
+            average_wait="mean",
+            p90_wait=lambda values: values.quantile(0.90, interpolation="higher"),
+        )
         .reset_index()
     )
     pressure = pressure[pressure["completed_visits"] >= 50].sort_values("p90_wait", ascending=False)
@@ -255,7 +261,7 @@ with wait_tab:
             completed_visits="size",
             average_wait="mean",
             median_wait="median",
-            p90_wait=lambda values: values.quantile(0.90),
+            p90_wait=lambda values: values.quantile(0.90, interpolation="higher"),
         )
         .reset_index()
         .sort_values("p90_wait", ascending=True)

@@ -151,7 +151,7 @@ def calculate_kpis(frame: pd.DataFrame) -> dict[str, float | int]:
         "completion_rate_pct": round(100 * len(completed) / len(eligible), 2),
         "no_show_rate_pct": round(100 * eligible["no_show"].mean(), 2),
         "median_wait_minutes": round(float(completed["wait_minutes"].median()), 1),
-        "p90_wait_minutes": round(float(completed["wait_minutes"].quantile(0.90)), 1),
+        "p90_wait_minutes": round(float(completed["wait_minutes"].quantile(0.90, interpolation="higher")), 1),
     }
 
 

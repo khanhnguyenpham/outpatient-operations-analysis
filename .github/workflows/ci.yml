@@ -13,4 +13,6 @@ jobs:
       - run: ruff format --check .
       - run: pytest
       - run: python run_analysis.py
+      - run: python scripts/build_static_site.py
+      - run: git diff --exit-code docs/assets/appointments.json
 

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Đồ án phân tích dữ liệu vận hành khám ngoại trú bằng Python, SQL và trực quan hóa tương tác.">
+    <meta name="theme-color" content="#102d43">
+    <title>Phân tích vận hành khám ngoại trú</title>
+    <link rel="preconnect" href="https://cdn.plot.ly">
+    <link rel="stylesheet" href="assets/site.css">
+    <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script defer src="assets/site.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Đi đến nội dung chính</a>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="Về đầu trang">
+          <span class="brand-mark">PK</span>
+          <span>
+            <strong>Phân tích ngoại trú</strong>
+            <small>Đồ án Data Analyst</small>
+          </span>
+        </a>
+        <nav aria-label="Điều hướng chính">
+          <a href="#tong-quan">Tổng quan</a>
+          <a href="#cho-doi">Thời gian chờ</a>
+          <a href="#vang-hen">Vắng hẹn</a>
+          <a href="#phuong-phap">Phương pháp</a>
+        </nav>
+        <a class="repo-link" href="https://github.com/khanhnguyenpham/outpatient-operations-analysis" target="_blank" rel="noreferrer">
+          Xem mã nguồn
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" id="top">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">PHÂN TÍCH VẬN HÀNH · BUÔN MA THUỘT</p>
+            <h1>Ưu tiên đúng nơi đang tạo ra thời gian chờ dài</h1>
+            <p class="hero-lead">
+              Phân tích 6.500 lịch hẹn mô phỏng để xác định chuyên khoa, khung giờ cần rà soát và theo dõi tình trạng vắng hẹn trước khi thảo luận thay đổi vận hành.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#tong-quan">Khám phá dashboard</a>
+              <a class="button button-secondary" href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/reports/analysis_report.md" target="_blank" rel="noreferrer">Đọc báo cáo phân tích</a>
+            </div>
+            <p class="data-disclaimer">
+              <span aria-hidden="true">●</span>
+              Dữ liệu hoàn toàn mô phỏng, không chứa thông tin bệnh nhân thật.
+            </p>
+          </div>
+          <aside class="hero-finding" aria-label="Kết luận chính">
+            <p class="finding-label">KẾT LUẬN ƯU TIÊN</p>
+            <strong id="hero-department">Tim mạch</strong>
+            <p id="hero-finding-copy">có P90 thời gian chờ cao nhất trong phạm vi đang chọn.</p>
+            <div class="finding-number">
+              <span id="hero-p90">50,5</span>
+              <small>phút · P90</small>
+            </div>
+            <p class="finding-footnote">P90 cho biết 90% lượt hoàn thành có thời gian chờ thấp hơn mức này.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="dashboard-shell" id="tong-quan">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow dark">BẢNG ĐIỀU HÀNH</p>
+            <h2>Tổng quan theo phạm vi lựa chọn</h2>
+          </div>
+          <p class="section-intro">Bộ lọc tác động đồng thời đến toàn bộ KPI, biểu đồ và bảng ưu tiên bên dưới.</p>
+        </div>
+
+        <div class="filter-panel" aria-label="Bộ lọc báo cáo">
+          <div class="filter-heading">
+            <div>
+              <span class="filter-title">Chuyên khoa</span>
+              <span class="filter-help">Chọn một hoặc nhiều chuyên khoa</span>
+            </div>
+            <button class="text-button" id="reset-filters" type="button">Đặt lại bộ lọc</button>
+          </div>
+          <div class="department-options" id="department-options" role="group" aria-label="Lọc theo chuyên khoa"></div>
+          <div class="date-filters">
+            <label>
+              <span>Từ tháng</span>
+              <input id="start-month" type="month" min="2025-01" max="2026-10" value="2025-01">
+            </label>
+            <label>
+              <span>Đến tháng</span>
+              <input id="end-month" type="month" min="2025-01" max="2026-10" value="2026-10">
+            </label>
+            <p id="filter-summary" aria-live="polite">Đang tải dữ liệu…</p>
+          </div>
+        </div>
+
+        <div class="status-message" id="status-message" role="status">Đang tải dữ liệu phân tích…</div>
+
+        <div class="kpi-grid" id="kpi-grid" hidden>
+          <article class="kpi-card">
+            <span>Tổng lịch hẹn</span>
+            <strong id="kpi-appointments">–</strong>
+            <small>Bao gồm lịch đã hủy</small>
+          </article>
+          <article class="kpi-card">
+            <span>Tỷ lệ vắng hẹn</span>
+            <strong id="kpi-no-show">–</strong>
+            <small>Loại trừ lịch đã hủy</small>
+          </article>
+          <article class="kpi-card">
+            <span>Chờ trung vị</span>
+            <strong id="kpi-median">–</strong>
+            <small>Trải nghiệm điển hình</small>
+          </article>
+          <article class="kpi-card accent">
+            <span>Thời gian chờ P90</span>
+            <strong id="kpi-p90">–</strong>
+            <small>Nhóm chờ lâu cần theo dõi</small>
+          </article>
+        </div>
+
+        <div class="chart-grid overview-grid">
+          <article class="panel panel-wide">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">NHU CẦU VÀ ĐIỂM DANH</p>
+                <h3>Xu hướng theo tháng</h3>
+              </div>
+              <span class="legend-note">Cột: lịch hẹn · Đường: tỷ lệ vắng</span>
+            </div>
+            <div class="chart" id="monthly-chart" aria-label="Biểu đồ xu hướng lịch hẹn và tỷ lệ vắng theo tháng"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">MẬT ĐỘ LỊCH HẸN</p>
+                <h3>Ngày và khung giờ</h3>
+              </div>
+            </div>
+            <div class="chart" id="heatmap-chart" aria-label="Bản đồ nhiệt mật độ lịch hẹn theo ngày và giờ"></div>
+          </article>
+          <article class="panel insight-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">ĐỌC NHANH KẾT QUẢ</p>
+                <h3>Điểm cần chú ý</h3>
+              </div>
+            </div>
+            <div id="dynamic-insights" class="insight-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="content-section" id="cho-doi">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow dark">01 · THỜI GIAN CHỜ</p>
+            <h2>Không để số trung bình che khuất nhóm chờ lâu</h2>
+          </div>
+          <p class="section-intro">Trung vị mô tả lượt khám điển hình; P90 giúp nhận diện phần đuôi của phân phối để ưu tiên rà soát.</p>
+        </div>
+        <div class="two-column-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">SO SÁNH CHUYÊN KHOA</p>
+                <h3>Trung vị và P90 thời gian chờ</h3>
+              </div>
+              <span class="unit-label">Đơn vị: phút</span>
+            </div>
+            <div class="chart chart-tall" id="wait-chart" aria-label="Biểu đồ thời gian chờ theo chuyên khoa"></div>
+          </article>
+          <article class="panel table-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">LÁT CẮT ỔN ĐỊNH</p>
+                <h3>Khung giờ ưu tiên rà soát</h3>
+              </div>
+            </div>
+            <p class="panel-description">Chỉ xếp hạng tổ hợp có ít nhất 50 lượt hoàn thành trong phạm vi đang chọn.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Chuyên khoa</th>
+                    <th>Giờ</th>
+                    <th>Lượt</th>
+                    <th>P90</th>
+                  </tr>
+                </thead>
+                <tbody id="pressure-table"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="content-section muted-section" id="vang-hen">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow dark">02 · VẮNG HẸN</p>
+            <h2>Phân biệt tín hiệu mô tả với tác động nhân quả</h2>
+          </div>
+          <p class="section-intro">So sánh giúp hình thành giả thuyết vận hành nhưng không đủ để kết luận nhắc hẹn trực tiếp làm giảm vắng hẹn.</p>
+        </div>
+        <div class="two-column-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">THEO CHUYÊN KHOA</p>
+                <h3>Tỷ lệ vắng hẹn</h3>
+              </div>
+            </div>
+            <div class="chart" id="no-show-chart" aria-label="Biểu đồ tỷ lệ vắng hẹn theo chuyên khoa"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">NHẮC HẸN</p>
+                <h3>So sánh hai nhóm ghi nhận</h3>
+              </div>
+            </div>
+            <div class="chart" id="reminder-chart" aria-label="Biểu đồ tỷ lệ vắng theo trạng thái nhắc hẹn"></div>
+            <p class="method-warning"><strong>Lưu ý:</strong> khả năng gửi nhắc hẹn có liên quan đến số ngày đặt trước trong dữ liệu mô phỏng. Chênh lệch quan sát không phải mức tác động nhân quả.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="content-section" id="phuong-phap">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow dark">03 · PHƯƠNG PHÁP</p>
+            <h2>Từ dữ liệu nguồn đến báo cáo có thể kiểm tra</h2>
+          </div>
+          <p class="section-intro">Quy trình được thiết kế để người đọc có thể truy ngược định nghĩa KPI, SQL và kiểm thử thay vì chỉ nhìn vào biểu đồ cuối.</p>
+        </div>
+
+        <div class="pipeline" aria-label="Quy trình xử lý dữ liệu">
+          <div><span>01</span><strong>Sinh dữ liệu</strong><small>6.500 lịch hẹn, hạt giống cố định</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>02</span><strong>Kiểm tra</strong><small>Khóa, danh mục, thời gian và trạng thái</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>03</span><strong>Kho SQLite</strong><small>Mô hình sao và đối soát số dòng</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>04</span><strong>Phân tích</strong><small>SQL, Python, báo cáo và website</small></div>
+        </div>
+
+        <div class="method-grid">
+          <article class="definition-card">
+            <span class="definition-number">13</span>
+            <strong>trường dữ liệu nguồn</strong>
+            <p>Không có họ tên, số điện thoại, địa chỉ, bệnh án hoặc chẩn đoán.</p>
+          </article>
+          <article class="definition-card">
+            <span class="definition-number" id="quality-duplicates">0</span>
+            <strong>mã lịch hẹn trùng</strong>
+            <p>Mỗi lịch hẹn có một mã duy nhất trước khi được nạp vào kho dữ liệu.</p>
+          </article>
+          <article class="definition-card">
+            <span class="definition-number">3/3</span>
+            <strong>tầng được đối soát</strong>
+            <p>Dữ liệu nguồn, bảng sự kiện và view báo cáo đều có 6.500 dòng.</p>
+          </article>
+        </div>
+
+        <div class="method-links">
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/metrics.md" target="_blank" rel="noreferrer">Định nghĩa KPI <span>↗</span></a>
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/data_dictionary.md" target="_blank" rel="noreferrer">Từ điển dữ liệu <span>↗</span></a>
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/data_model.md" target="_blank" rel="noreferrer">Mô hình dữ liệu <span>↗</span></a>
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/sql/analysis.sql" target="_blank" rel="noreferrer">Truy vấn SQL <span>↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>
+        <strong>Phân tích vận hành khám ngoại trú</strong>
+        <p>Đồ án portfolio sử dụng Python, SQL, SQLite và JavaScript.</p>
+      </div>
+      <p>Dữ liệu mô phỏng · Không sử dụng cho quyết định y tế hoặc vận hành thực tế</p>
+    </footer>
+  </body>
+</html>

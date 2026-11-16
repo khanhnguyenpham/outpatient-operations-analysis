@@ -8,6 +8,8 @@
 - Đối soát số dòng nguồn, bảng sự kiện, view và khóa ngoại mồ côi.
 - Truy vấn SQL cho xu hướng tháng, phân phối chờ, lát cắt áp lực và nhắc hẹn.
 - Dashboard tiếng Việt có bộ lọc, KPI, xu hướng, bản đồ nhiệt và kiểm soát dữ liệu.
+- Website GitHub Pages tiếng Việt, tải nhanh và không cần đăng nhập; bộ lọc chạy trực tiếp trên trình duyệt.
+- Dữ liệu JSON công khai tối thiểu, không chứa mã người bệnh, được tạo lại bằng mã nguồn và kiểm thử.
 - Báo cáo quyết định có đề xuất, giới hạn và khoảng Wilson.
 - Kiểm tra tự động bằng Ruff, pytest và GitHub Actions.
 - Tự tạo hoặc nâng cấp dữ liệu demo khi chạy trên máy mới.
@@ -22,8 +24,8 @@
 
 ## Bước tiếp theo an toàn
 
-1. Triển khai `dashboard.py` lên Streamlit Community Cloud và bổ sung đường dẫn vào `README.md`.
-2. Thêm ảnh chụp dashboard sau khi bản triển khai được kiểm tra trên màn hình laptop.
-3. Thử độ nhạy với ngưỡng số mẫu của lát cắt, không thay đổi định nghĩa KPI chính.
+1. Thêm ảnh chụp website sau khi bản GitHub Pages được kiểm tra trên màn hình laptop.
+2. Thử độ nhạy với ngưỡng số mẫu của lát cắt, không thay đổi định nghĩa KPI chính.
+3. Bổ sung chú thích sự kiện vận hành nếu có bộ dữ liệu thực tế phù hợp và đã được ẩn danh.
 
 Không thêm machine learning vào repository này. Phần đó thuộc đồ án AI Systems riêng để mỗi dự án giữ được câu chuyện tuyển dụng rõ ràng.

@@ -20,6 +20,7 @@ ruff check .
 ruff format --check .
 pytest
 python run_analysis.py
+python scripts/build_static_site.py
 ```
 
 Khi thay đổi bộ sinh dữ liệu, KPI hoặc SQL, phải đối chiếu lại `reports/analysis_report.md` và các số tham chiếu trong `README.md`.
@@ -35,6 +36,8 @@ Khi thay đổi bộ sinh dữ liệu, KPI hoặc SQL, phải đối chiếu l�
 
 - `run_analysis.py`: chạy toàn bộ quy trình có thể tái tạo.
 - `dashboard.py`: demo Streamlit; tự tạo hoặc nâng cấp dữ liệu mẫu.
+- `docs/index.html`: dashboard tĩnh công khai trên GitHub Pages.
+- `scripts/build_static_site.py`: tạo tệp JSON tối thiểu, không chứa mã người bệnh, cho website.
 - `sql/analysis.sql`: các truy vấn nghiệp vụ có tên.
 - `reports/analysis_report.md`: báo cáo quyết định dành cho nhà tuyển dụng.
 - `docs/project_status.md`: trạng thái hiện tại và bước tiếp theo an toàn.

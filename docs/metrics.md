@@ -6,7 +6,7 @@
 | Tỷ lệ hoàn thành | Lượt hoàn thành / (hoàn thành + vắng hẹn) | Loại trừ lịch đã hủy |
 | Tỷ lệ vắng hẹn | Lượt vắng / (hoàn thành + vắng hẹn) | Loại trừ lịch đã hủy |
 | Chờ trung vị | Phân vị 50% số phút từ đến nơi đến bắt đầu phục vụ | Chỉ lượt hoàn thành |
-| Chờ P90 | Phân vị 90% của cùng khoảng thời gian | Chỉ lượt hoàn thành |
+| Chờ P90 | Phân vị 90% theo nearest-rank (lấy quan sát đầu tiên đạt 90%) | Chỉ lượt hoàn thành |
 
 Thời gian sử dụng múi giờ địa phương của cơ sở khám. Thời gian chờ âm là không hợp lệ. Bảng ưu tiên chuyên khoa – khung giờ yêu cầu ít nhất 50 lượt hoàn thành; bảng tổng hợp theo thứ – giờ yêu cầu ít nhất 30 lịch hẹn.
 

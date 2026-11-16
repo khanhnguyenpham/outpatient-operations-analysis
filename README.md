@@ -4,6 +4,12 @@
 
 > Toàn bộ 6.500 lịch hẹn trong đồ án là dữ liệu mô phỏng có thể tái tạo bằng mã nguồn. Dự án không sử dụng và không đại diện cho dữ liệu của bệnh viện hay bệnh nhân thật.
 
+## Website tương tác
+
+**[Mở dashboard công khai](https://khanhnguyenpham.github.io/outpatient-operations-analysis/)**
+
+Bản web tĩnh tải nhanh, không yêu cầu đăng nhập và tính lại KPI, biểu đồ theo bộ lọc ngay trên trình duyệt. Dữ liệu công khai đã loại bỏ mã người bệnh và chỉ giữ các trường cần cho phân tích tổng hợp.
+
 ## Kết quả chính
 
 - Tỷ lệ vắng hẹn chung là **13,79%**; mẫu số loại trừ lịch đã hủy.
@@ -35,7 +41,8 @@ Kho dữ liệu SQLite dạng sao
       │
       ├──► Truy vấn SQL nghiệp vụ
       ├──► Báo cáo quyết định
-      └──► Dashboard Streamlit
+      ├──► Dashboard Streamlit
+      └──► Website GitHub Pages
 ```
 
 Mỗi lần chạy, hệ thống đối soát số dòng giữa nguồn, bảng sự kiện và view báo cáo; đồng thời kiểm tra khóa ngoại mồ côi. Các truy vấn SQL được đặt tên và xuất riêng để dễ kiểm tra.
@@ -49,6 +56,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 python run_analysis.py
+python scripts/build_static_site.py
 streamlit run dashboard.py
 ```
 
@@ -61,6 +69,7 @@ ruff check .
 ruff format --check .
 pytest
 python run_analysis.py
+python scripts/build_static_site.py
 ```
 
 Bộ kiểm thử bao phủ quy tắc dữ liệu, mẫu số KPI, nâng cấp dữ liệu demo cũ, đối soát kho dữ liệu và khả năng thực thi của toàn bộ truy vấn nghiệp vụ. GitHub Actions chạy lại các bước này sau mỗi lần cập nhật mã nguồn.
@@ -76,6 +85,7 @@ src/ops_analysis/     sinh, kiểm tra và xử lý dữ liệu
 tests/                kiểm thử logic phân tích và kho dữ liệu
 dashboard.py          dashboard tương tác bằng Streamlit
 run_analysis.py       chạy toàn bộ quy trình bằng một lệnh
+scripts/              tạo dữ liệu tối thiểu cho website tĩnh
 ```
 
 ## Tài liệu kỹ thuật
