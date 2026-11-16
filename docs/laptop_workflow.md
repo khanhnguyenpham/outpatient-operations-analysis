@@ -2,6 +2,15 @@
 
 GitHub is the shared source of truth. Generated CSV and SQLite files are intentionally excluded because each computer can recreate them with the same seed.
 
+## Continue with Codex on the laptop
+
+1. Install the ChatGPT desktop app with Codex and sign in using the same account.
+2. Clone this repository using the commands below.
+3. In Codex, open the cloned `outpatient-operations-analysis` folder as the project folder.
+4. Start a new Codex chat in that folder and ask: `Read AGENTS.md and docs/project_status.md, then continue the next safe step.`
+
+The repository carries the durable project context. Chat synchronization alone does not copy a local project folder to another computer.
+
 ## First setup on the laptop
 
 ```powershell

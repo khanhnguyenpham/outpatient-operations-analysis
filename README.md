@@ -54,6 +54,7 @@ run_analysis.py       one-command workflow
 - [Data dictionary](docs/data_dictionary.md) — field-level meanings.
 - [SQL analysis](sql/analysis.sql) — named queries with window functions for trends, median and P90.
 - [Laptop workflow](docs/laptop_workflow.md) — clone, branch, test and synchronize safely between computers.
+- [Project status](docs/project_status.md) — completed work and the next safe task for Codex on another machine.
 
 ## Hosted demo
 
