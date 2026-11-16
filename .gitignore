@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.pytest-tmp/
+.mplconfig/
+data/generated/*.csv
+data/generated/*.db
+reports/generated/*
+!reports/generated/.gitkeep
+
