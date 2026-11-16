@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -5,6 +6,10 @@ import plotly.express as px
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "src"))
+
+from ops_analysis.data import ensure_demo_dataset
+
 DATA = ROOT / "data" / "generated" / "appointments.csv"
 
 st.set_page_config(page_title="Outpatient Operations", layout="wide")
@@ -12,8 +17,8 @@ st.title("Outpatient operations dashboard")
 st.caption("Synthetic portfolio data — descriptive analysis only")
 
 if not DATA.exists():
-    st.error("Run `python run_analysis.py` first.")
-    st.stop()
+    with st.spinner("Preparing reproducible demo data..."):
+        ensure_demo_dataset(DATA)
 
 frame = pd.read_csv(DATA, parse_dates=["appointment_date"])
 departments = st.sidebar.multiselect(

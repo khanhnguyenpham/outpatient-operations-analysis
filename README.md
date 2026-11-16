@@ -53,6 +53,11 @@ run_analysis.py       one-command workflow
 - [Data model](docs/data_model.md) — fact/dimension design and reconciliation.
 - [Data dictionary](docs/data_dictionary.md) — field-level meanings.
 - [SQL analysis](sql/analysis.sql) — named queries with window functions for trends, median and P90.
+- [Laptop workflow](docs/laptop_workflow.md) — clone, branch, test and synchronize safely between computers.
+
+## Hosted demo
+
+The Streamlit app creates its reproducible synthetic dataset automatically when no generated CSV exists. This keeps both Community Cloud and a newly cloned laptop setup independent of local files.
 
 ## Analytical choices
 

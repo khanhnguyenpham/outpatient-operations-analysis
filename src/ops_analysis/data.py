@@ -120,3 +120,11 @@ def build_dataset(output: Path, rows: int = 6500) -> pd.DataFrame:
     output.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output, index=False)
     return frame
+
+
+def ensure_demo_dataset(output: Path, rows: int = 6500) -> bool:
+    """Create deterministic demo data only when the expected file is absent."""
+    if output.exists():
+        return False
+    build_dataset(output, rows=rows)
+    return True
