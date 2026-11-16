@@ -11,3 +11,5 @@
 Thời gian sử dụng múi giờ địa phương của cơ sở khám. Thời gian chờ âm là không hợp lệ. Bảng ưu tiên chuyên khoa – khung giờ yêu cầu ít nhất 50 lượt hoàn thành; bảng tổng hợp theo thứ – giờ yêu cầu ít nhất 30 lịch hẹn.
 
 Trung vị mô tả trải nghiệm điển hình, còn P90 cho biết ngưỡng mà 90% lượt khám nằm dưới. Hai chỉ số được trình bày cùng nhau để tránh việc một giá trị trung bình che khuất nhóm phải chờ lâu.
+
+Tổng thời gian chờ bằng ba công đoạn: tiếp nhận, chờ vào phòng và chờ bắt đầu khám. Sai lệch lớn hơn 0,11 phút giữa tổng công đoạn và `wait_minutes` bị xem là lỗi đối soát.

@@ -13,6 +13,7 @@ def test_warehouse_reconciles_source_rows(tmp_path):
     checks = validate_warehouse(database, expected_rows=200)
     assert checks["orphan_dates"] == 0
     assert checks["orphan_departments"] == 0
+    assert checks["stage_total_mismatch"] == 0
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT COUNT(*) FROM dim_department").fetchone()[0] == 6
 
@@ -27,3 +28,5 @@ def test_every_business_query_executes(tmp_path):
     counts = run_queries(database, sql_file, tmp_path / "results")
     assert counts["department_performance"] == 6
     assert counts["reminder_comparison"] == 2
+    assert counts["wait_stage_breakdown"] == 6
+    assert "sensitivity_thresholds" in counts

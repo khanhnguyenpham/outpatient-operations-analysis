@@ -95,3 +95,68 @@ FROM appointments
 WHERE status != 'Đã hủy'
 GROUP BY reminder_sent;
 
+-- name: wait_stage_breakdown
+-- Phân rã thời gian chờ trung bình để định vị công đoạn tạo độ trễ
+SELECT
+    department,
+    COUNT(*) AS completed_visits,
+    ROUND(AVG(checkin_wait_minutes), 1) AS average_checkin_wait,
+    ROUND(AVG(room_wait_minutes), 1) AS average_room_wait,
+    ROUND(AVG(clinician_wait_minutes), 1) AS average_clinician_wait,
+    ROUND(AVG(wait_minutes), 1) AS average_total_wait
+FROM appointments
+WHERE status = 'Hoàn thành'
+GROUP BY department
+ORDER BY average_total_wait DESC;
+
+-- name: sensitivity_thresholds
+-- Kiểm tra thứ hạng lát cắt khi thay đổi ngưỡng cỡ mẫu 30, 50 và 70 lượt
+WITH thresholds(minimum_visits) AS (
+    VALUES (30), (50), (70)
+),
+completed AS (
+    SELECT
+        department,
+        appointment_hour,
+        wait_minutes,
+        CUME_DIST() OVER (
+            PARTITION BY department, appointment_hour
+            ORDER BY wait_minutes
+        ) AS cumulative_share
+    FROM appointments
+    WHERE status = 'Hoàn thành'
+),
+slice_summary AS (
+    SELECT
+        department,
+        appointment_hour,
+        COUNT(*) AS completed_visits,
+        MIN(CASE WHEN cumulative_share >= 0.90 THEN wait_minutes END) AS p90_wait_minutes
+    FROM completed
+    GROUP BY department, appointment_hour
+),
+ranked AS (
+    SELECT
+        t.minimum_visits,
+        s.department,
+        s.appointment_hour,
+        s.completed_visits,
+        ROUND(s.p90_wait_minutes, 1) AS p90_wait_minutes,
+        ROW_NUMBER() OVER (
+            PARTITION BY t.minimum_visits
+            ORDER BY s.p90_wait_minutes DESC, s.completed_visits DESC
+        ) AS pressure_rank
+    FROM thresholds t
+    JOIN slice_summary s ON s.completed_visits >= t.minimum_visits
+)
+SELECT
+    minimum_visits,
+    pressure_rank,
+    department,
+    appointment_hour,
+    completed_visits,
+    p90_wait_minutes
+FROM ranked
+WHERE pressure_rank <= 3
+ORDER BY minimum_visits, pressure_rank;
+

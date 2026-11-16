@@ -125,7 +125,7 @@ function calculateDepartmentWait(completed) {
   });
 }
 
-function calculatePressure(completed) {
+function calculatePressure(completed, minimumVisits = 50) {
   return [...groupBy(completed, (record) => `${record.p}|${record.h}`).entries()]
     .map(([key, records]) => {
       const [department, hour] = key.split("|");
@@ -138,8 +138,18 @@ function calculatePressure(completed) {
         p90: percentileHigher(waits, 0.9),
       };
     })
-    .filter((row) => row.completed >= 50)
+    .filter((row) => row.completed >= minimumVisits)
     .sort((a, b) => b.p90 - a.p90 || b.completed - a.completed);
+}
+
+function calculateStageSummary(completed) {
+  return [...groupBy(completed, (record) => record.p).entries()].map(([department, records]) => ({
+    department,
+    checkin: mean(records.map((record) => record.ci).filter((value) => value !== null)),
+    room: mean(records.map((record) => record.rm).filter((value) => value !== null)),
+    clinician: mean(records.map((record) => record.cl).filter((value) => value !== null)),
+    total: mean(records.map((record) => record.t).filter((value) => value !== null)),
+  }));
 }
 
 function renderDepartmentFilters() {
@@ -305,6 +315,87 @@ function renderWaitChart(departmentWait) {
   );
 }
 
+function renderStageChart(completed) {
+  const rows = calculateStageSummary(completed).sort((a, b) => a.total - b.total);
+  const layout = baseLayout(430);
+  layout.barmode = "stack";
+  layout.margin = { l: 150, r: 24, t: 30, b: 48 };
+  layout.xaxis = { title: "Phút trung bình", gridcolor: COLORS.grid, rangemode: "tozero" };
+  layout.yaxis = { showgrid: false };
+
+  Plotly.react(
+    "stage-chart",
+    [
+      {
+        type: "bar",
+        name: "Tiếp nhận",
+        orientation: "h",
+        y: rows.map((row) => row.department),
+        x: rows.map((row) => row.checkin),
+        marker: { color: COLORS.tealLight },
+        hovertemplate: "%{y}<br>Tiếp nhận: <b>%{x:.1f} phút</b><extra></extra>",
+      },
+      {
+        type: "bar",
+        name: "Chờ vào phòng",
+        orientation: "h",
+        y: rows.map((row) => row.department),
+        x: rows.map((row) => row.room),
+        marker: { color: COLORS.navyLight },
+        hovertemplate: "%{y}<br>Chờ vào phòng: <b>%{x:.1f} phút</b><extra></extra>",
+      },
+      {
+        type: "bar",
+        name: "Chờ bắt đầu khám",
+        orientation: "h",
+        y: rows.map((row) => row.department),
+        x: rows.map((row) => row.clinician),
+        marker: { color: COLORS.navy },
+        hovertemplate: "%{y}<br>Chờ bắt đầu khám: <b>%{x:.1f} phút</b><extra></extra>",
+      },
+    ],
+    layout,
+    PLOT_CONFIG,
+  );
+}
+
+function renderSensitivity(completed) {
+  const thresholds = [30, 50, 70];
+  const results = thresholds.map((threshold) => ({
+    threshold,
+    rows: calculatePressure(completed, threshold).slice(0, 3),
+  }));
+  const container = document.querySelector("#sensitivity-grid");
+  container.innerHTML = results
+    .map(({ threshold, rows }) => {
+      const ranking = rows.length
+        ? rows
+            .map(
+              (row, index) =>
+                `<li><span>${index + 1}</span>${row.department} · ${String(row.hour).padStart(2, "0")}:00</li>`,
+            )
+            .join("")
+        : "<li>Chưa có lát cắt đủ mẫu</li>";
+      return `
+        <article class="sensitivity-card">
+          <p>NGƯỠNG TỐI THIỂU</p>
+          <strong>${threshold} lượt</strong>
+          <ol>${ranking}</ol>
+        </article>
+      `;
+    })
+    .join("");
+
+  const signatures = results.map(({ rows }) => rows.map((row) => `${row.department}|${row.hour}`).join(","));
+  const enoughData = results.every(({ rows }) => rows.length === 3);
+  const stable = enoughData && signatures.every((signature) => signature === signatures[0]);
+  document.querySelector("#sensitivity-conclusion").textContent = !enoughData
+    ? "Phạm vi đang chọn chưa đủ ba lát cắt ở mọi ngưỡng để đánh giá độ bền kết luận."
+    : stable
+      ? "Kết luận ổn định: ba vị trí đầu không thay đổi ở cả ba ngưỡng."
+      : "Thứ hạng thay đổi theo ngưỡng; cần diễn giải thận trọng khi ưu tiên lát cắt.";
+}
+
 function renderPressureTable(pressure) {
   const body = document.querySelector("#pressure-table");
   body.innerHTML = "";
@@ -387,15 +478,86 @@ function renderReminderChart(eligible) {
   );
 }
 
-function renderInsights(departmentWait, pressure, eligible) {
+function renderControlChart(eligible) {
+  const monthly = [...groupBy(eligible, (record) => record.d.slice(0, 7)).entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([month, rows]) => ({
+      month,
+      n: rows.length,
+      rate: rows.reduce((sum, record) => sum + record.n, 0) / rows.length,
+    }));
+  const overall = eligible.reduce((sum, record) => sum + record.n, 0) / eligible.length;
+  monthly.forEach((row) => {
+    const sigma = Math.sqrt((overall * (1 - overall)) / row.n);
+    row.ucl = Math.min(1, overall + 3 * sigma);
+    row.lcl = Math.max(0, overall - 3 * sigma);
+    row.signal = row.rate > row.ucl || row.rate < row.lcl;
+  });
+  const labels = monthly.map((row) => monthLabel(row.month));
+  const signalCount = monthly.filter((row) => row.signal).length;
+  const layout = baseLayout(390);
+  layout.margin = { l: 60, r: 26, t: 30, b: 62 };
+  layout.xaxis = { type: "category", tickangle: -35, showgrid: false };
+  layout.yaxis = { title: "Tỷ lệ vắng hẹn", tickformat: ".0%", gridcolor: COLORS.grid, rangemode: "tozero" };
+
+  Plotly.react(
+    "control-chart",
+    [
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Tỷ lệ theo tháng",
+        x: labels,
+        y: monthly.map((row) => row.rate),
+        line: { color: COLORS.amber, width: 2.5 },
+        marker: {
+          size: 7,
+          color: monthly.map((row) => (row.signal ? "#b42318" : COLORS.amber)),
+        },
+        hovertemplate: "%{x}<br><b>%{y:.1%}</b><extra></extra>",
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "Giới hạn trên",
+        x: labels,
+        y: monthly.map((row) => row.ucl),
+        line: { color: COLORS.navyLight, dash: "dash", width: 1.5 },
+        hovertemplate: "%{x}<br>UCL: %{y:.1%}<extra></extra>",
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "Đường trung tâm",
+        x: labels,
+        y: monthly.map(() => overall),
+        line: { color: COLORS.teal, width: 1.5 },
+        hovertemplate: "Tỷ lệ chung: %{y:.1%}<extra></extra>",
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        name: "Giới hạn dưới",
+        x: labels,
+        y: monthly.map((row) => row.lcl),
+        line: { color: COLORS.navyLight, dash: "dash", width: 1.5 },
+        hovertemplate: "%{x}<br>LCL: %{y:.1%}<extra></extra>",
+      },
+    ],
+    layout,
+    PLOT_CONFIG,
+  );
+
+  document.querySelector("#control-conclusion").textContent = signalCount
+    ? `${signalCount} tháng nằm ngoài giới hạn kiểm soát và cần được đối chiếu với sự kiện vận hành.`
+    : "Không có tháng nào vượt giới hạn ba sigma; biến động hiện tại phù hợp với nhiễu nguyên nhân chung.";
+}
+
+function renderInsights(departmentWait, pressure, completed) {
   const container = document.querySelector("#dynamic-insights");
   const worstDepartment = [...departmentWait].sort((a, b) => b.p90 - a.p90)[0];
   const topPressure = pressure[0];
-  const reminderGroups = [0, 1].map((value) => {
-    const rows = eligible.filter((record) => record.r === value);
-    return rows.length ? rows.reduce((sum, record) => sum + record.n, 0) / rows.length : 0;
-  });
-  const reminderDifference = Math.max(0, (reminderGroups[0] - reminderGroups[1]) * 100);
+  const worstStage = calculateStageSummary(completed).sort((a, b) => b.total - a.total)[0];
 
   const insights = [
     {
@@ -409,8 +571,8 @@ function renderInsights(departmentWait, pressure, eligible) {
         : "Chưa có tổ hợp chuyên khoa – khung giờ đạt tối thiểu 50 lượt hoàn thành.",
     },
     {
-      label: "NHẮC HẸN",
-      value: `Nhóm có ghi nhận nhắc hẹn có tỷ lệ vắng thấp hơn ${decimalFormatter.format(reminderDifference)} điểm phần trăm; chưa thể kết luận nhân quả.`,
+      label: "CÔNG ĐOẠN",
+      value: `Tại ${worstStage.department}, chờ bắt đầu khám chiếm ${decimalFormatter.format(worstStage.clinician)} trên ${decimalFormatter.format(worstStage.total)} phút trung bình.`,
     },
   ];
 
@@ -457,10 +619,13 @@ function renderDashboard() {
   renderMonthlyChart(records);
   renderHeatmap(records);
   renderWaitChart(departmentWait);
+  renderStageChart(completed);
   renderPressureTable(pressure);
+  renderSensitivity(completed);
   renderNoShowChart(eligible);
   renderReminderChart(eligible);
-  renderInsights(departmentWait, pressure, eligible);
+  renderControlChart(eligible);
+  renderInsights(departmentWait, pressure, completed);
 }
 
 function bindControls() {

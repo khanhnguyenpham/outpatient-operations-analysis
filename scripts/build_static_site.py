@@ -27,6 +27,13 @@ def build_static_data(output: Path, rows: int = 6500) -> dict[str, object]:
                 "r": int(item.reminder_sent),
                 "s": item.status,
                 "n": int(item.no_show),
+                "ci": None
+                if item.checkin_wait_minutes != item.checkin_wait_minutes
+                else float(item.checkin_wait_minutes),
+                "rm": None if item.room_wait_minutes != item.room_wait_minutes else float(item.room_wait_minutes),
+                "cl": None
+                if item.clinician_wait_minutes != item.clinician_wait_minutes
+                else float(item.clinician_wait_minutes),
                 "t": None if item.wait_minutes != item.wait_minutes else float(item.wait_minutes),
             }
         )
@@ -35,6 +42,9 @@ def build_static_data(output: Path, rows: int = 6500) -> dict[str, object]:
         "metadata": {
             "title": "Phân tích vận hành khám ngoại trú",
             "synthetic": True,
+            "seed": 42,
+            "source": "Dữ liệu mô phỏng do mã Python trong repository tạo ra",
+            "represents_real_hospital": False,
             "rows": len(records),
             "date_min": frame["appointment_date"].min(),
             "date_max": frame["appointment_date"].max(),

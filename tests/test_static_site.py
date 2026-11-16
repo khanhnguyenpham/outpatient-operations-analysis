@@ -10,9 +10,12 @@ def test_static_site_payload_is_complete_and_anonymous(tmp_path):
     saved = json.loads(output.read_text(encoding="utf-8"))
 
     assert payload["metadata"]["synthetic"] is True
+    assert payload["metadata"]["seed"] == 42
+    assert payload["metadata"]["represents_real_hospital"] is False
+    assert "Python" in payload["metadata"]["source"]
     assert saved["metadata"]["rows"] == 120
     assert len(saved["records"]) == 120
-    assert set(saved["records"][0]) == {"d", "p", "h", "w", "r", "s", "n", "t"}
+    assert set(saved["records"][0]) == {"d", "p", "h", "w", "r", "s", "n", "t", "ci", "rm", "cl"}
     assert "patient_id" not in output.read_text(encoding="utf-8")
 
 

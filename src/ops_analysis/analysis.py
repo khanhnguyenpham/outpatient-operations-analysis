@@ -47,6 +47,9 @@ def load_sqlite(frame: pd.DataFrame, database: Path) -> None:
                 outside_city INTEGER NOT NULL CHECK (outside_city IN (0, 1)),
                 status TEXT NOT NULL CHECK (status IN ('Hoàn thành', 'Vắng hẹn', 'Đã hủy')),
                 no_show INTEGER NOT NULL CHECK (no_show IN (0, 1)),
+                checkin_wait_minutes REAL,
+                room_wait_minutes REAL,
+                clinician_wait_minutes REAL,
                 wait_minutes REAL
             );
 
@@ -67,6 +70,9 @@ def load_sqlite(frame: pd.DataFrame, database: Path) -> None:
                 f.outside_city,
                 f.status,
                 f.no_show,
+                f.checkin_wait_minutes,
+                f.room_wait_minutes,
+                f.clinician_wait_minutes,
                 f.wait_minutes
             FROM fact_appointment f
             JOIN dim_date d ON d.date_key = f.date_key
@@ -110,10 +116,15 @@ def load_sqlite(frame: pd.DataFrame, database: Path) -> None:
                     int(item.outside_city),
                     item.status,
                     int(item.no_show),
+                    None if pd.isna(item.checkin_wait_minutes) else float(item.checkin_wait_minutes),
+                    None if pd.isna(item.room_wait_minutes) else float(item.room_wait_minutes),
+                    None if pd.isna(item.clinician_wait_minutes) else float(item.clinician_wait_minutes),
                     None if pd.isna(item.wait_minutes) else float(item.wait_minutes),
                 )
             )
-        connection.executemany("INSERT INTO fact_appointment VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+        connection.executemany(
+            "INSERT INTO fact_appointment VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", rows
+        )
 
 
 def validate_warehouse(database: Path, expected_rows: int) -> dict[str, int]:
@@ -132,13 +143,28 @@ def validate_warehouse(database: Path, expected_rows: int) -> dict[str, int]:
                LEFT JOIN dim_department d ON d.department_key = f.department_key
                WHERE d.department_key IS NULL"""
         ).fetchone()[0]
+        stage_total_mismatch = connection.execute(
+            """SELECT COUNT(*)
+               FROM fact_appointment
+               WHERE status = 'Hoàn thành'
+                 AND ABS(
+                    checkin_wait_minutes + room_wait_minutes + clinician_wait_minutes - wait_minutes
+                 ) > 0.11"""
+        ).fetchone()[0]
     checks = {
         "fact_rows": fact_rows,
         "view_rows": view_rows,
         "orphan_dates": orphan_dates,
         "orphan_departments": orphan_departments,
+        "stage_total_mismatch": stage_total_mismatch,
     }
-    if fact_rows != expected_rows or view_rows != expected_rows or orphan_dates or orphan_departments:
+    if (
+        fact_rows != expected_rows
+        or view_rows != expected_rows
+        or orphan_dates
+        or orphan_departments
+        or stage_total_mismatch
+    ):
         raise ValueError(f"Đối soát kho dữ liệu không đạt: {checks}")
     return checks
 
@@ -170,6 +196,12 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
         "missing_department": int(frame["department"].isna().sum()),
         "missing_wait_completed": int(completed["wait_minutes"].isna().sum()),
     }
+    stage_labels = {
+        "checkin_wait_minutes": "tiếp nhận",
+        "room_wait_minutes": "chờ vào phòng",
+        "clinician_wait_minutes": "chờ bắt đầu khám",
+    }
+    stage_averages = completed[list(stage_labels)].mean().sort_values(ascending=False)
 
     ax = wait_by_department.sort_values().plot.barh(figsize=(8, 4), color="#2563eb")
     ax.set(title="Thời gian chờ trung vị theo chuyên khoa", xlabel="Phút", ylabel="")
@@ -195,6 +227,10 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
         "",
         f"- Chờ trung vị cao nhất: {wait_by_department.index[0]} ({wait_by_department.iloc[0]:.1f} phút).",
         f"- Tỷ lệ vắng hẹn cao nhất: {no_show_by_department.index[0]} ({no_show_by_department.iloc[0]:.1f}%).",
+        (
+            f"- Công đoạn chờ lớn nhất: {stage_labels[stage_averages.index[0]]} "
+            f"({stage_averages.iloc[0]:.1f} phút trung bình)."
+        ),
         "- Đây là tín hiệu mô tả để bắt đầu rà soát vận hành, không phải căn cứ tự động điều chỉnh nhân sự.",
         "",
         "## Kiểm tra chất lượng dữ liệu",

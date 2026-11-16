@@ -16,6 +16,9 @@
 | `outside_city` | nhị phân | 1 nếu thuộc nhóm mô phỏng ở ngoài thành phố |
 | `status` | danh mục | `Hoàn thành`, `Vắng hẹn` hoặc `Đã hủy` |
 | `no_show` | nhị phân | 1 khi và chỉ khi trạng thái là `Vắng hẹn` |
+| `checkin_wait_minutes` | số thập phân/rỗng | Số phút từ lúc đến nơi đến khi hoàn tất tiếp nhận |
+| `room_wait_minutes` | số thập phân/rỗng | Số phút từ hoàn tất tiếp nhận đến khi vào phòng khám |
+| `clinician_wait_minutes` | số thập phân/rỗng | Số phút từ khi vào phòng đến khi bắt đầu được phục vụ |
 | `wait_minutes` | số thập phân/rỗng | Số phút từ đến nơi đến bắt đầu phục vụ; chỉ có ở lượt hoàn thành |
 
 ## Các bảng trong kho dữ liệu

@@ -15,6 +15,7 @@ DEPARTMENTS = {
     "Nội tiết": (0.07, 26),
 }
 VALID_STATUSES = {"Hoàn thành", "Vắng hẹn", "Đã hủy"}
+WAIT_STAGE_COLUMNS = ("checkin_wait_minutes", "room_wait_minutes", "clinician_wait_minutes")
 
 
 def generate_appointments(rows: int = 6500, seed: int = 42) -> pd.DataFrame:
@@ -39,8 +40,21 @@ def generate_appointments(rows: int = 6500, seed: int = 42) -> pd.DataFrame:
     no_show = (status == "Vắng hẹn").astype(int)
     peak = np.isin(hours, [9, 10, 14]) * 8
     base_wait = np.array([DEPARTMENTS[d][1] for d in departments])
-    wait = np.clip(rng.normal(base_wait + peak, 11), 2, 100).round(1)
-    wait = pd.Series(wait).mask(status != "Hoàn thành")
+    total_wait = np.clip(rng.normal(base_wait + peak, 11), 2, 100).round(1)
+    stage_shapes = np.tile(np.array([2.2, 2.6, 4.8]), (rows, 1))
+    stage_shapes[departments == "Tim mạch"] += np.array([-0.3, -0.2, 1.7])
+    stage_shapes[departments == "Chấn thương chỉnh hình"] += np.array([-0.1, 0.4, 0.7])
+    stage_shapes[np.isin(hours, [9, 10, 14])] += np.array([0.7, 0.2, 0.0])
+    stage_draws = rng.gamma(stage_shapes, 1.0)
+    stage_shares = stage_draws / stage_draws.sum(axis=1, keepdims=True)
+    checkin_wait = np.floor(total_wait * stage_shares[:, 0] * 10) / 10
+    room_wait = np.floor(total_wait * stage_shares[:, 1] * 10) / 10
+    clinician_wait = np.round(total_wait - checkin_wait - room_wait, 1)
+    completed_mask = status == "Hoàn thành"
+    wait = pd.Series(total_wait).mask(~completed_mask)
+    checkin_wait = pd.Series(checkin_wait).mask(~completed_mask)
+    room_wait = pd.Series(room_wait).mask(~completed_mask)
+    clinician_wait = pd.Series(clinician_wait).mask(~completed_mask)
     patient_numbers = rng.integers(0, 1900, rows)
     patient_ids = [hashlib.sha256(f"synthetic-{n}".encode()).hexdigest()[:10] for n in patient_numbers]
     frame = pd.DataFrame(
@@ -57,6 +71,9 @@ def generate_appointments(rows: int = 6500, seed: int = 42) -> pd.DataFrame:
             "outside_city": outside_city,
             "status": status,
             "no_show": no_show,
+            "checkin_wait_minutes": checkin_wait,
+            "room_wait_minutes": room_wait,
+            "clinician_wait_minutes": clinician_wait,
             "wait_minutes": wait,
         }
     )
@@ -78,6 +95,7 @@ def validate(frame: pd.DataFrame) -> list[str]:
         "outside_city",
         "status",
         "no_show",
+        *WAIT_STAGE_COLUMNS,
         "wait_minutes",
     }
     missing = required - set(frame.columns)
@@ -105,8 +123,17 @@ def validate(frame: pd.DataFrame) -> list[str]:
         errors.append("lượt khám hoàn thành phải có wait_minutes")
     if frame.loc[frame["status"] != "Hoàn thành", "wait_minutes"].notna().any():
         errors.append("lượt khám chưa hoàn thành không được có wait_minutes")
-    if (frame["wait_minutes"].dropna() < 0).any():
-        errors.append("wait_minutes không được âm")
+    wait_columns = ["wait_minutes", *WAIT_STAGE_COLUMNS]
+    if (frame[wait_columns].stack() < 0).any():
+        errors.append("các khoảng thời gian chờ không được âm")
+    completed = frame["status"] == "Hoàn thành"
+    if not frame.loc[completed, list(WAIT_STAGE_COLUMNS)].notna().all().all():
+        errors.append("lượt khám hoàn thành phải có đủ thời gian chờ theo công đoạn")
+    if frame.loc[~completed, list(WAIT_STAGE_COLUMNS)].notna().any().any():
+        errors.append("lượt khám chưa hoàn thành không được có thời gian chờ theo công đoạn")
+    stage_total = frame.loc[completed, list(WAIT_STAGE_COLUMNS)].sum(axis=1)
+    if not np.allclose(stage_total, frame.loc[completed, "wait_minutes"], atol=0.11):
+        errors.append("tổng thời gian chờ theo công đoạn không khớp wait_minutes")
     if not frame["no_show"].eq(frame["status"].eq("Vắng hẹn").astype(int)).all():
         errors.append("no_show không khớp với status")
     return errors
@@ -126,7 +153,7 @@ def ensure_demo_dataset(output: Path, rows: int = 6500) -> bool:
     """Tạo lại dữ liệu mẫu khi tệp chưa có hoặc không còn đúng phiên bản."""
     if output.exists():
         try:
-            current = pd.read_csv(output, usecols=["department", "status"])
+            current = pd.read_csv(output, usecols=["department", "status", *WAIT_STAGE_COLUMNS])
             departments_ok = set(current["department"].dropna()).issubset(DEPARTMENTS)
             statuses_ok = set(current["status"].dropna()).issubset(VALID_STATUSES)
             if departments_ok and statuses_ok and len(current) == rows:

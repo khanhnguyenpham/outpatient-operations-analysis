@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -190,7 +191,7 @@ with overview_tab:
     demand_figure.update_traces(line={"width": 2.5}, fillcolor="rgba(37, 99, 235, 0.10)")
     st.plotly_chart(style_chart(demand_figure, 350), width="stretch", config=PLOT_CONFIG)
 
-    pressure = (
+    pressure_all = (
         completed.groupby(["department", "appointment_hour"])["wait_minutes"]
         .agg(
             completed_visits="size",
@@ -199,7 +200,7 @@ with overview_tab:
         )
         .reset_index()
     )
-    pressure = pressure[pressure["completed_visits"] >= 50].sort_values("p90_wait", ascending=False)
+    pressure = pressure_all[pressure_all["completed_visits"] >= 50].sort_values("p90_wait", ascending=False)
     if pressure.empty:
         top_pressure = None
     else:
@@ -284,6 +285,26 @@ with wait_tab:
     wait_chart.update_layout(barmode="overlay", title="Trung vị và P90 thời gian chờ", xaxis_title="Phút")
     st.plotly_chart(style_chart(wait_chart, 420), width="stretch", config=PLOT_CONFIG)
 
+    st.subheader("Phân rã thời gian chờ theo công đoạn")
+    stage_columns = {
+        "checkin_wait_minutes": "Tiếp nhận",
+        "room_wait_minutes": "Chờ vào phòng",
+        "clinician_wait_minutes": "Chờ bắt đầu khám",
+    }
+    stage_summary = completed.groupby("department")[list(stage_columns)].mean().reset_index()
+    stage_chart = go.Figure()
+    stage_colors = ["#B9E1DC", "#8DA9BB", NAVY]
+    for (column, label), color in zip(stage_columns.items(), stage_colors, strict=True):
+        stage_chart.add_bar(
+            y=stage_summary["department"],
+            x=stage_summary[column],
+            name=label,
+            orientation="h",
+            marker_color=color,
+        )
+    stage_chart.update_layout(barmode="stack", title="Thời gian chờ trung bình", xaxis_title="Phút")
+    st.plotly_chart(style_chart(stage_chart, 420), width="stretch", config=PLOT_CONFIG)
+
     st.subheader("Danh sách khung giờ ưu tiên rà soát")
     st.caption("Chỉ hiển thị lát cắt có ít nhất 50 lượt khám hoàn thành để hạn chế xếp hạng từ mẫu quá nhỏ.")
     pressure_display = pressure.head(12).copy()
@@ -301,6 +322,25 @@ with wait_tab:
         width="stretch",
         hide_index=True,
     )
+
+    st.subheader("Độ nhạy theo ngưỡng cỡ mẫu")
+    sensitivity_rows = []
+    for threshold in (30, 50, 70):
+        ranked = pressure_all[pressure_all["completed_visits"] >= threshold].sort_values(
+            ["p90_wait", "completed_visits"], ascending=False
+        )
+        for rank, item in enumerate(ranked.head(3).itertuples(index=False), start=1):
+            sensitivity_rows.append(
+                {
+                    "Ngưỡng": threshold,
+                    "Hạng": rank,
+                    "Chuyên khoa": item.department,
+                    "Khung giờ": f"{int(item.appointment_hour):02d}:00",
+                    "Lượt hoàn thành": int(item.completed_visits),
+                    "P90 (phút)": item.p90_wait,
+                }
+            )
+    st.dataframe(pd.DataFrame(sensitivity_rows), width="stretch", hide_index=True)
 
 with no_show_tab:
     st.subheader("Phân tích tình trạng vắng hẹn")
@@ -352,16 +392,61 @@ with no_show_tab:
         unsafe_allow_html=True,
     )
 
+    st.subheader("Biểu đồ kiểm soát tỷ lệ vắng hẹn theo tháng")
+    monthly_control = (
+        eligible.assign(month=eligible["appointment_date"].dt.to_period("M"))
+        .groupby("month", as_index=False)
+        .agg(eligible_appointments=("appointment_id", "count"), no_show_rate=("no_show", "mean"))
+    )
+    center_line = eligible["no_show"].mean()
+    sigma = np.sqrt(center_line * (1 - center_line) / monthly_control["eligible_appointments"])
+    monthly_control["ucl"] = np.minimum(1, center_line + 3 * sigma)
+    monthly_control["lcl"] = np.maximum(0, center_line - 3 * sigma)
+    monthly_control["Tháng"] = monthly_control["month"].dt.strftime("%m/%Y")
+    control_chart = go.Figure()
+    control_chart.add_scatter(
+        x=monthly_control["Tháng"],
+        y=monthly_control["no_show_rate"],
+        mode="lines+markers",
+        name="Tỷ lệ theo tháng",
+        line={"color": AMBER, "width": 2.5},
+    )
+    control_chart.add_scatter(
+        x=monthly_control["Tháng"],
+        y=monthly_control["ucl"],
+        mode="lines",
+        name="Giới hạn trên",
+        line={"color": "#8DA9BB", "dash": "dash"},
+    )
+    control_chart.add_scatter(
+        x=monthly_control["Tháng"],
+        y=[center_line] * len(monthly_control),
+        mode="lines",
+        name="Đường trung tâm",
+        line={"color": TEAL},
+    )
+    control_chart.add_scatter(
+        x=monthly_control["Tháng"],
+        y=monthly_control["lcl"],
+        mode="lines",
+        name="Giới hạn dưới",
+        line={"color": "#8DA9BB", "dash": "dash"},
+    )
+    control_chart.update_yaxes(tickformat=".0%")
+    st.plotly_chart(style_chart(control_chart, 390), width="stretch", config=PLOT_CONFIG)
+
 with quality_tab:
     st.subheader("Kiểm soát chất lượng và phạm vi sử dụng")
     duplicate_ids = int(filtered["appointment_id"].duplicated().sum())
     missing_departments = int(filtered["department"].isna().sum())
     missing_wait = int(completed["wait_minutes"].isna().sum())
-    quality_columns = st.columns(3)
+    stage_total = completed[["checkin_wait_minutes", "room_wait_minutes", "clinician_wait_minutes"]].sum(axis=1)
+    stage_mismatch = int(((stage_total - completed["wait_minutes"]).abs() > 0.11).sum())
+    quality_columns = st.columns(4)
     for column, label, value in zip(
         quality_columns,
-        ["Mã lịch hẹn trùng", "Thiếu chuyên khoa", "Thiếu thời gian chờ"],
-        [duplicate_ids, missing_departments, missing_wait],
+        ["Mã lịch hẹn trùng", "Thiếu chuyên khoa", "Thiếu thời gian chờ", "Sai tổng công đoạn"],
+        [duplicate_ids, missing_departments, missing_wait, stage_mismatch],
         strict=True,
     ):
         with column:
@@ -374,10 +459,17 @@ with quality_tab:
             ["Chờ trung vị", "Trung vị số phút từ đến nơi đến bắt đầu phục vụ", "Chỉ lượt hoàn thành"],
             ["P90 thời gian chờ", "Phân vị 90% của thời gian chờ", "Chỉ lượt hoàn thành"],
             ["Lát cắt ưu tiên", "Chuyên khoa theo khung giờ", "Tối thiểu 50 lượt hoàn thành"],
+            ["Giới hạn kiểm soát", "Đường trung tâm ± ba độ lệch chuẩn", "Điều chỉnh theo số lịch mỗi tháng"],
         ],
         columns=["Chỉ số", "Cách tính", "Phạm vi"],
     )
     st.dataframe(definitions, width="stretch", hide_index=True)
+
+    st.markdown("### Nguồn dữ liệu")
+    st.info(
+        "Dữ liệu mô phỏng bằng Python với seed 42; không lấy từ Kaggle, Bệnh viện Thiện Hạnh "
+        "hoặc bất kỳ cơ sở y tế thật nào."
+    )
 
     st.markdown("### Tải dữ liệu theo bộ lọc")
     st.download_button(

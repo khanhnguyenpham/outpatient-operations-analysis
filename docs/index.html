@@ -67,6 +67,24 @@
         </div>
       </section>
 
+      <section class="decision-context" aria-label="Bối cảnh nghiệp vụ">
+        <div>
+          <span>NGƯỜI DÙNG GIẢ ĐỊNH</span>
+          <strong>Trưởng bộ phận vận hành ngoại trú</strong>
+          <p>Không đại diện cho Bệnh viện Thiện Hạnh hoặc cơ sở y tế cụ thể.</p>
+        </div>
+        <div>
+          <span>QUYẾT ĐỊNH CẦN HỖ TRỢ</span>
+          <strong>Chọn nơi cần rà soát trước</strong>
+          <p>Mẫu lịch, công suất phòng và thời điểm sẵn sàng phục vụ.</p>
+        </div>
+        <div>
+          <span>KHÔNG NẰM TRONG PHẠM VI</span>
+          <strong>Không tự động bố trí nhân sự</strong>
+          <p>Không dự đoán từng người bệnh hoặc đưa ra quyết định lâm sàng.</p>
+        </div>
+      </section>
+
       <section class="dashboard-shell" id="tong-quan">
         <div class="section-heading">
           <div>
@@ -197,6 +215,27 @@
             </div>
           </article>
         </div>
+        <article class="panel full-width-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">ĐỊNH VỊ NÚT THẮT</p>
+              <h3>Phân rã thời gian chờ theo công đoạn</h3>
+            </div>
+            <span class="legend-note">Tổng chờ = tiếp nhận + chờ vào phòng + chờ bắt đầu khám</span>
+          </div>
+          <div class="chart chart-tall" id="stage-chart" aria-label="Biểu đồ phân rã thời gian chờ theo công đoạn"></div>
+        </article>
+        <article class="panel full-width-panel sensitivity-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">KIỂM TRA ĐỘ BỀN KẾT LUẬN</p>
+              <h3>Thứ hạng khi thay đổi ngưỡng cỡ mẫu</h3>
+            </div>
+          </div>
+          <p class="panel-description">So sánh ba vị trí đầu khi yêu cầu tối thiểu 30, 50 hoặc 70 lượt hoàn thành cho mỗi lát cắt.</p>
+          <div class="sensitivity-grid" id="sensitivity-grid"></div>
+          <p class="analysis-conclusion" id="sensitivity-conclusion"></p>
+        </article>
       </section>
 
       <section class="content-section muted-section" id="vang-hen">
@@ -228,6 +267,17 @@
             <p class="method-warning"><strong>Lưu ý:</strong> khả năng gửi nhắc hẹn có liên quan đến số ngày đặt trước trong dữ liệu mô phỏng. Chênh lệch quan sát không phải mức tác động nhân quả.</p>
           </article>
         </div>
+        <article class="panel full-width-panel control-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">KIỂM SOÁT THỐNG KÊ</p>
+              <h3>Biểu đồ p cho tỷ lệ vắng hẹn theo tháng</h3>
+            </div>
+            <span class="legend-note">Giới hạn ba sigma thay đổi theo số lịch mỗi tháng</span>
+          </div>
+          <div class="chart" id="control-chart" aria-label="Biểu đồ kiểm soát tỷ lệ vắng hẹn theo tháng"></div>
+          <p class="analysis-conclusion" id="control-conclusion"></p>
+        </article>
       </section>
 
       <section class="content-section" id="phuong-phap">
@@ -251,7 +301,7 @@
 
         <div class="method-grid">
           <article class="definition-card">
-            <span class="definition-number">13</span>
+            <span class="definition-number">16</span>
             <strong>trường dữ liệu nguồn</strong>
             <p>Không có họ tên, số điện thoại, địa chỉ, bệnh án hoặc chẩn đoán.</p>
           </article>
@@ -267,7 +317,18 @@
           </article>
         </div>
 
+        <article class="source-card">
+          <div>
+            <p class="panel-kicker">NGUỒN DỮ LIỆU</p>
+            <h3>Mô phỏng bằng Python, công khai toàn bộ giả định</h3>
+            <p>Dữ liệu được tạo với seed 42 từ mã nguồn trong repository. Không lấy từ Kaggle, Bệnh viện Thiện Hạnh hoặc bất kỳ cơ sở y tế thật nào. Các quy luật được đưa vào có chủ đích để kiểm tra pipeline; kết quả không mô tả hiện trạng của một bệnh viện.</p>
+          </div>
+          <a class="button source-button" href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/src/ops_analysis/data.py" target="_blank" rel="noreferrer">Xem bộ sinh dữ liệu ↗</a>
+        </article>
+
         <div class="method-links">
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/stakeholder_brief.md" target="_blank" rel="noreferrer">Yêu cầu nghiệp vụ <span>↗</span></a>
+          <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/assumptions.md" target="_blank" rel="noreferrer">Sổ giả định <span>↗</span></a>
           <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/metrics.md" target="_blank" rel="noreferrer">Định nghĩa KPI <span>↗</span></a>
           <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/data_dictionary.md" target="_blank" rel="noreferrer">Từ điển dữ liệu <span>↗</span></a>
           <a href="https://github.com/khanhnguyenpham/outpatient-operations-analysis/blob/main/docs/data_model.md" target="_blank" rel="noreferrer">Mô hình dữ liệu <span>↗</span></a>

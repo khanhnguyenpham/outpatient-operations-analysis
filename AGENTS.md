@@ -10,6 +10,8 @@
 - Không mô tả phát hiện như kết quả của một bệnh viện thật.
 - Không thêm tên, số điện thoại, địa chỉ, bệnh án hoặc dữ liệu cá nhân.
 - So sánh nhắc hẹn là liên hệ mô tả, không phải ước lượng nhân quả.
+- Ba công đoạn chờ là dữ liệu mô phỏng; không mô tả chúng như timestamp quan sát từ bệnh viện.
+- Khi thay đổi logic thời gian chờ, phải giữ đối soát tổng ba công đoạn với `wait_minutes`.
 - Giữ nguyên định nghĩa trong `docs/metrics.md`, trừ khi cập nhật đồng bộ báo cáo, SQL và kiểm thử.
 - Nội dung dành cho nhà tuyển dụng và giao diện phải viết bằng tiếng Việt rõ ràng, tự nhiên.
 

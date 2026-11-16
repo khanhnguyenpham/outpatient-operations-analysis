@@ -11,6 +11,13 @@ def test_generated_data_passes_validation():
     assert frame["appointment_id"].is_unique
 
 
+def test_wait_stages_reconcile_to_total_wait():
+    frame = generate_appointments(rows=400, seed=9)
+    completed = frame[frame["status"] == "Hoàn thành"]
+    stage_total = completed[["checkin_wait_minutes", "room_wait_minutes", "clinician_wait_minutes"]].sum(axis=1)
+    assert (stage_total - completed["wait_minutes"]).abs().max() <= 0.11
+
+
 def test_no_show_denominator_excludes_cancellations():
     frame = pd.DataFrame(
         {
@@ -36,6 +43,14 @@ def test_invalid_operational_values_are_reported():
     errors = validate(frame)
     assert "appointment_hour phải nằm trong khoảng 7 đến 16" in errors
     assert "reminder_sent phải là biến nhị phân" in errors
+
+
+def test_invalid_wait_stage_total_is_reported():
+    frame = generate_appointments(rows=100, seed=4)
+    completed_index = frame.index[frame["status"] == "Hoàn thành"][0]
+    frame.loc[completed_index, "clinician_wait_minutes"] += 5
+    errors = validate(frame)
+    assert "tổng thời gian chờ theo công đoạn không khớp wait_minutes" in errors
 
 
 def test_demo_dataset_is_created_once(tmp_path):

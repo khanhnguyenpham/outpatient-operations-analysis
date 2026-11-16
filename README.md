@@ -10,12 +10,21 @@
 
 Bản web tĩnh tải nhanh, không yêu cầu đăng nhập và tính lại KPI, biểu đồ theo bộ lọc ngay trên trình duyệt. Dữ liệu công khai đã loại bỏ mã người bệnh và chỉ giữ các trường cần cho phân tích tổng hợp.
 
+## Nguồn dữ liệu và tính trung thực
+
+Dữ liệu do [`src/ops_analysis/data.py`](src/ops_analysis/data.py) tạo bằng Python với seed 42; không lấy từ Kaggle, Bệnh viện Thiện Hạnh hoặc bất kỳ cơ sở y tế thật nào. Bộ sinh mô phỏng các quan hệ có chủ đích để kiểm tra quy trình phân tích, vì vậy phát hiện chỉ chứng minh năng lực xây pipeline và lập luận trên dữ liệu, không chứng minh hiện trạng của một bệnh viện.
+
+Các giả định và rủi ro khi chuyển sang dữ liệu thật được công khai trong [sổ đăng ký giả định](docs/assumptions.md).
+
 ## Kết quả chính
 
 - Tỷ lệ vắng hẹn chung là **13,79%**; mẫu số loại trừ lịch đã hủy.
 - Thời gian chờ trung vị là **27,7 phút**, trong khi P90 là **43,9 phút**. P90 giúp không che khuất nhóm phải chờ lâu.
 - **Tim mạch** có thời gian chờ cao nhất: trung vị **35,9 phút**, P90 **50,5 phút**.
 - Ba lát cắt ổn định cần rà soát đầu tiên là Tim mạch lúc **09:00, 10:00 và 14:00**.
+- Chờ bắt đầu khám là thành phần lớn nhất ở Tim mạch: trung bình **20,8/35,6 phút**.
+- Ba khung giờ ưu tiên không thay đổi khi dùng ngưỡng tối thiểu **30, 50 hoặc 70 lượt**.
+- Không có tháng nào vượt giới hạn kiểm soát ba sigma của tỷ lệ vắng hẹn.
 - Nhóm có ghi nhận nhắc hẹn có tỷ lệ vắng thấp hơn **6,24 điểm phần trăm**; đây là liên hệ mô tả, không phải bằng chứng nhân quả.
 
 Phân tích đầy đủ, giới hạn và đề xuất hành động nằm trong [báo cáo phân tích](reports/analysis_report.md).
@@ -25,8 +34,10 @@ Phân tích đầy đủ, giới hạn và đề xuất hành động nằm tron
 1. Nhu cầu khám tập trung vào thời điểm nào?
 2. Chuyên khoa nào có phân phối thời gian chờ đáng chú ý nhất?
 3. Những tổ hợp chuyên khoa – khung giờ nào nên được rà soát trước?
-4. Tình trạng vắng hẹn có khác biệt đáng kể giữa các chuyên khoa không?
-5. Việc ghi nhận nhắc hẹn có liên hệ như thế nào với tỷ lệ vắng hẹn?
+4. Công đoạn nào đóng góp nhiều nhất vào tổng thời gian chờ?
+5. Kết luận ưu tiên có thay đổi khi đổi ngưỡng cỡ mẫu không?
+6. Tỷ lệ vắng theo tháng có vượt giới hạn kiểm soát thống kê không?
+7. Việc ghi nhận nhắc hẹn có liên hệ như thế nào với tỷ lệ vắng hẹn?
 
 ## Quy trình xử lý
 
@@ -91,6 +102,8 @@ scripts/              tạo dữ liệu tối thiểu cho website tĩnh
 ## Tài liệu kỹ thuật
 
 - [Báo cáo phân tích và khuyến nghị](reports/analysis_report.md)
+- [Bản tóm tắt yêu cầu nghiệp vụ](docs/stakeholder_brief.md)
+- [Sổ đăng ký giả định](docs/assumptions.md)
 - [Định nghĩa chỉ số](docs/metrics.md)
 - [Mô hình dữ liệu](docs/data_model.md)
 - [Từ điển dữ liệu](docs/data_dictionary.md)
