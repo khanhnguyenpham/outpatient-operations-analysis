@@ -1,20 +1,19 @@
-# Project guidance for Codex
+# Hướng dẫn tiếp tục dự án cho Codex
 
-## Purpose
+## Mục đích
 
-This repository is a Data Analyst portfolio case study about fictional outpatient operations in Buon Ma Thuot. Keep it focused on SQL, data quality, KPI definitions, operational analysis and dashboard communication. Predictive modeling belongs in the separate AI Systems repository.
+Đây là đồ án portfolio Data Analyst về vận hành ngoại trú mô phỏng tại Buôn Ma Thuột. Giữ trọng tâm ở SQL, chất lượng dữ liệu, định nghĩa KPI, phân tích vận hành và trình bày trên dashboard. Mô hình dự đoán và triển khai AI thuộc repository AI Systems riêng.
 
-## Data and claims
+## Dữ liệu và cách diễn giải
 
-- All appointment and patient records are synthetic.
-- Never describe findings as results from a real hospital.
-- Do not add names, phone numbers, addresses, medical records or other personal data.
-- Treat reminder comparisons as descriptive associations, not causal effects.
-- Preserve the KPI definitions in `docs/metrics.md` unless the report, SQL and tests are updated together.
+- Mọi lịch hẹn và mã người bệnh đều là dữ liệu mô phỏng.
+- Không mô tả phát hiện như kết quả của một bệnh viện thật.
+- Không thêm tên, số điện thoại, địa chỉ, bệnh án hoặc dữ liệu cá nhân.
+- So sánh nhắc hẹn là liên hệ mô tả, không phải ước lượng nhân quả.
+- Giữ nguyên định nghĩa trong `docs/metrics.md`, trừ khi cập nhật đồng bộ báo cáo, SQL và kiểm thử.
+- Nội dung dành cho nhà tuyển dụng và giao diện phải viết bằng tiếng Việt rõ ràng, tự nhiên.
 
-## Standard verification
-
-Run these commands before committing:
+## Kiểm tra chuẩn trước khi commit
 
 ```powershell
 ruff check .
@@ -23,20 +22,19 @@ pytest
 python run_analysis.py
 ```
 
-When the generator, KPI logic or SQL changes, reconcile the generated results with `reports/analysis_report.md` and the reference values in `README.md`.
+Khi thay đổi bộ sinh dữ liệu, KPI hoặc SQL, phải đối chiếu lại `reports/analysis_report.md` và các số tham chiếu trong `README.md`.
 
-## Repository hygiene
+## Vệ sinh repository
 
-- Do not commit `.venv`, generated CSV/SQLite files, query exports or secrets.
-- Keep `main` deployable; make non-trivial changes on a short-lived branch.
-- Prefer small commits with messages that describe the analytical or engineering outcome.
-- Update tests when adding a validation rule, warehouse table, KPI or business query.
+- Không commit `.venv`, CSV/SQLite tạo sinh, kết quả truy vấn hoặc thông tin bí mật.
+- Giữ `main` ở trạng thái chạy được; thay đổi lớn nên dùng nhánh ngắn hạn.
+- Commit nhỏ, thông điệp nêu rõ kết quả phân tích hoặc kỹ thuật.
+- Thêm kiểm thử khi bổ sung quy tắc dữ liệu, bảng kho, KPI hoặc truy vấn nghiệp vụ.
 
-## Important entry points
+## Điểm vào quan trọng
 
-- `run_analysis.py`: reproducible end-to-end pipeline.
-- `dashboard.py`: Streamlit demo; creates demo data when the generated CSV is absent.
-- `sql/analysis.sql`: named business queries executed by the pipeline.
-- `reports/analysis_report.md`: recruiter-facing decision report.
-- `docs/project_status.md`: current state and safe next steps.
-
+- `run_analysis.py`: chạy toàn bộ quy trình có thể tái tạo.
+- `dashboard.py`: demo Streamlit; tự tạo hoặc nâng cấp dữ liệu mẫu.
+- `sql/analysis.sql`: các truy vấn nghiệp vụ có tên.
+- `reports/analysis_report.md`: báo cáo quyết định dành cho nhà tuyển dụng.
+- `docs/project_status.md`: trạng thái hiện tại và bước tiếp theo an toàn.

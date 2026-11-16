@@ -1,6 +1,5 @@
-# Data
+# Dữ liệu
 
-`run_analysis.py` generates the source file and derived SQLite database under `data/generated/`. Generated files are ignored by Git so the full workflow remains reproducible from code.
+`run_analysis.py` tạo CSV nguồn và SQLite trong `data/generated/`. Các tệp tạo sinh không được đưa lên Git để toàn bộ quy trình luôn có thể tái tạo từ mã nguồn.
 
-No row represents a real person. `patient_id` is a deterministic synthetic identifier.
-
+Không có dòng nào đại diện cho người thật. `patient_id` là mã mô phỏng được tạo ổn định bằng hàm băm.

@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 
 DEPARTMENTS = {
-    "Internal Medicine": (0.30, 24),
-    "Pediatrics": (0.22, 18),
-    "Cardiology": (0.16, 32),
-    "Orthopedics": (0.14, 28),
-    "Ophthalmology": (0.11, 20),
-    "Endocrinology": (0.07, 26),
+    "Nội tổng quát": (0.30, 24),
+    "Nhi": (0.22, 18),
+    "Tim mạch": (0.16, 32),
+    "Chấn thương chỉnh hình": (0.14, 28),
+    "Mắt": (0.11, 20),
+    "Nội tiết": (0.07, 26),
 }
-VALID_STATUSES = {"Completed", "No-show", "Cancelled"}
+VALID_STATUSES = {"Hoàn thành", "Vắng hẹn", "Đã hủy"}
 
 
 def generate_appointments(rows: int = 6500, seed: int = 42) -> pd.DataFrame:
@@ -35,12 +35,12 @@ def generate_appointments(rows: int = 6500, seed: int = 42) -> pd.DataFrame:
     probability = 1 / (1 + np.exp(-log_odds))
     no_show = rng.binomial(1, probability)
     cancelled = rng.binomial(1, np.clip(0.035 + 0.002 * lead_days, 0.03, 0.14))
-    status = np.where(cancelled, "Cancelled", np.where(no_show, "No-show", "Completed"))
-    no_show = (status == "No-show").astype(int)
+    status = np.where(cancelled, "Đã hủy", np.where(no_show, "Vắng hẹn", "Hoàn thành"))
+    no_show = (status == "Vắng hẹn").astype(int)
     peak = np.isin(hours, [9, 10, 14]) * 8
     base_wait = np.array([DEPARTMENTS[d][1] for d in departments])
     wait = np.clip(rng.normal(base_wait + peak, 11), 2, 100).round(1)
-    wait = pd.Series(wait).mask(status != "Completed")
+    wait = pd.Series(wait).mask(status != "Hoàn thành")
     patient_numbers = rng.integers(0, 1900, rows)
     patient_ids = [hashlib.sha256(f"synthetic-{n}".encode()).hexdigest()[:10] for n in patient_numbers]
     frame = pd.DataFrame(
@@ -82,33 +82,33 @@ def validate(frame: pd.DataFrame) -> list[str]:
     }
     missing = required - set(frame.columns)
     if missing:
-        errors.append(f"Missing columns: {sorted(missing)}")
+        errors.append(f"Thiếu các cột bắt buộc: {sorted(missing)}")
         return errors
     if frame["appointment_id"].duplicated().any():
-        errors.append("appointment_id must be unique")
+        errors.append("appointment_id phải là duy nhất")
     if frame[["appointment_id", "patient_id", "appointment_date", "department", "status"]].isna().any().any():
-        errors.append("key fields cannot be null")
+        errors.append("các trường khóa không được để trống")
     if pd.to_datetime(frame["appointment_date"], errors="coerce").isna().any():
-        errors.append("appointment_date contains an invalid date")
+        errors.append("appointment_date chứa ngày không hợp lệ")
     if not frame["appointment_hour"].between(7, 16).all():
-        errors.append("appointment_hour must be between 7 and 16")
+        errors.append("appointment_hour phải nằm trong khoảng 7 đến 16")
     if (frame[["lead_days", "prior_no_shows"]] < 0).any().any():
-        errors.append("lead_days and prior_no_shows cannot be negative")
+        errors.append("lead_days và prior_no_shows không được âm")
     for column in ("reminder_sent", "outside_city", "no_show"):
         if not set(frame[column].dropna()).issubset({0, 1}):
-            errors.append(f"{column} must be binary")
+            errors.append(f"{column} phải là biến nhị phân")
     if not set(frame["department"]).issubset(DEPARTMENTS):
-        errors.append("department contains an unexpected value")
+        errors.append("department chứa giá trị ngoài danh mục")
     if not set(frame["status"]).issubset(VALID_STATUSES):
-        errors.append("status contains an unexpected value")
-    if not frame.loc[frame["status"] == "Completed", "wait_minutes"].notna().all():
-        errors.append("completed visits must have wait_minutes")
-    if frame.loc[frame["status"] != "Completed", "wait_minutes"].notna().any():
-        errors.append("non-completed visits cannot have wait_minutes")
+        errors.append("status chứa giá trị ngoài danh mục")
+    if not frame.loc[frame["status"] == "Hoàn thành", "wait_minutes"].notna().all():
+        errors.append("lượt khám hoàn thành phải có wait_minutes")
+    if frame.loc[frame["status"] != "Hoàn thành", "wait_minutes"].notna().any():
+        errors.append("lượt khám chưa hoàn thành không được có wait_minutes")
     if (frame["wait_minutes"].dropna() < 0).any():
-        errors.append("wait_minutes cannot be negative")
-    if not frame["no_show"].eq(frame["status"].eq("No-show").astype(int)).all():
-        errors.append("no_show does not match status")
+        errors.append("wait_minutes không được âm")
+    if not frame["no_show"].eq(frame["status"].eq("Vắng hẹn").astype(int)).all():
+        errors.append("no_show không khớp với status")
     return errors
 
 
@@ -123,8 +123,15 @@ def build_dataset(output: Path, rows: int = 6500) -> pd.DataFrame:
 
 
 def ensure_demo_dataset(output: Path, rows: int = 6500) -> bool:
-    """Create deterministic demo data only when the expected file is absent."""
+    """Tạo lại dữ liệu mẫu khi tệp chưa có hoặc không còn đúng phiên bản."""
     if output.exists():
-        return False
+        try:
+            current = pd.read_csv(output, usecols=["department", "status"])
+            departments_ok = set(current["department"].dropna()).issubset(DEPARTMENTS)
+            statuses_ok = set(current["status"].dropna()).issubset(VALID_STATUSES)
+            if departments_ok and statuses_ok and len(current) == rows:
+                return False
+        except (OSError, ValueError, KeyError):
+            pass
     build_dataset(output, rows=rows)
     return True

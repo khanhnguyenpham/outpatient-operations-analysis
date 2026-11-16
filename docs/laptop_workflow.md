@@ -1,17 +1,17 @@
-# Continue the project on another computer
+# Tiếp tục dự án trên máy tính khác
 
-GitHub is the shared source of truth. Generated CSV and SQLite files are intentionally excluded because each computer can recreate them with the same seed.
+GitHub là nguồn mã dùng chung. CSV, SQLite và kết quả truy vấn được chủ động loại khỏi Git vì mỗi máy có thể tạo lại chính xác từ cùng mã nguồn và hạt giống ngẫu nhiên.
 
-## Continue with Codex on the laptop
+## Mở dự án bằng Codex trên laptop
 
-1. Install the ChatGPT desktop app with Codex and sign in using the same account.
-2. Clone this repository using the commands below.
-3. In Codex, open the cloned `outpatient-operations-analysis` folder as the project folder.
-4. Start a new Codex chat in that folder and ask: `Read AGENTS.md and docs/project_status.md, then continue the next safe step.`
+1. Cài ứng dụng ChatGPT có Codex và đăng nhập cùng tài khoản.
+2. Clone repository bằng các lệnh bên dưới.
+3. Trong Codex, mở thư mục `outpatient-operations-analysis` làm thư mục dự án.
+4. Tạo chat mới và yêu cầu: `Đọc AGENTS.md và docs/project_status.md, sau đó tiếp tục bước an toàn tiếp theo.`
 
-The repository carries the durable project context. Chat synchronization alone does not copy a local project folder to another computer.
+Lịch sử chat không tự sao chép thư mục mã nguồn giữa hai máy. Repository lưu bối cảnh bền vững để Codex hoặc người phát triển khác có thể tiếp tục đúng chỗ.
 
-## First setup on the laptop
+## Thiết lập lần đầu
 
 ```powershell
 git clone https://github.com/khanhnguyenpham/outpatient-operations-analysis.git
@@ -23,17 +23,17 @@ python run_analysis.py
 streamlit run dashboard.py
 ```
 
-## Start a change
+## Bắt đầu một thay đổi
 
-Always update `main` before creating a short-lived branch:
+Cập nhật `main` trước khi tạo nhánh ngắn hạn:
 
 ```powershell
 git switch main
 git pull --ff-only
-git switch -c feature/short-description
+git switch -c feature/mo-ta-ngan
 ```
 
-After editing, run the same checks as GitHub Actions:
+Sau khi sửa, chạy cùng các kiểm tra với GitHub Actions:
 
 ```powershell
 ruff check .
@@ -42,22 +42,21 @@ pytest
 python run_analysis.py
 ```
 
-Commit and push the branch:
+Commit và đẩy nhánh:
 
 ```powershell
 git add .
-git commit -m "Describe the change"
-git push -u origin feature/short-description
+git commit -m "Mô tả kết quả thay đổi"
+git push -u origin feature/mo-ta-ngan
 ```
 
-Open a pull request on GitHub and merge only after CI passes. On the other computer, return to `main` and run `git pull --ff-only` before continuing.
+Chỉ hợp nhất khi kiểm tra tự động đạt. Trên máy còn lại, quay về `main` và chạy `git pull --ff-only` trước khi tiếp tục.
 
-## Files that should stay local
+## Tệp chỉ nên nằm trên máy cá nhân
 
 - `.venv/`
-- generated CSV and SQLite files under `data/generated/`
-- generated query outputs under `reports/generated/`
-- Streamlit secrets
+- CSV và SQLite trong `data/generated/`
+- kết quả truy vấn trong `reports/generated/`
+- cấu hình bí mật của Streamlit
 
-Never copy tokens, passwords or `.streamlit/secrets.toml` into Git.
-
+Không đưa token, mật khẩu hoặc `.streamlit/secrets.toml` lên Git.

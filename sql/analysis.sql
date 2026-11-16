@@ -1,10 +1,10 @@
 -- name: monthly_trend
--- Monthly appointment volume and no-show rate
+-- Số lịch hẹn và tỷ lệ vắng theo tháng
 WITH monthly AS (
     SELECT
         substr(appointment_date, 1, 7) AS month,
         COUNT(*) AS appointments,
-        100.0 * SUM(no_show) / NULLIF(SUM(CASE WHEN status != 'Cancelled' THEN 1 ELSE 0 END), 0) AS no_show_rate_pct
+        100.0 * SUM(no_show) / NULLIF(SUM(CASE WHEN status != 'Đã hủy' THEN 1 ELSE 0 END), 0) AS no_show_rate_pct
     FROM appointments
     GROUP BY substr(appointment_date, 1, 7)
 )
@@ -17,14 +17,14 @@ FROM monthly
 ORDER BY month;
 
 -- name: department_performance
--- Department service performance
+-- Hiệu quả phục vụ theo chuyên khoa
 WITH wait_distribution AS (
     SELECT
         department,
         wait_minutes,
         CUME_DIST() OVER (PARTITION BY department ORDER BY wait_minutes) AS cumulative_share
     FROM appointments
-    WHERE status = 'Completed'
+    WHERE status = 'Hoàn thành'
 ),
 wait_summary AS (
     SELECT
@@ -39,7 +39,7 @@ wait_summary AS (
 attendance AS (
     SELECT
         department,
-        ROUND(100.0 * SUM(no_show) / NULLIF(SUM(CASE WHEN status != 'Cancelled' THEN 1 ELSE 0 END), 0), 2) AS no_show_rate_pct
+        ROUND(100.0 * SUM(no_show) / NULLIF(SUM(CASE WHEN status != 'Đã hủy' THEN 1 ELSE 0 END), 0), 2) AS no_show_rate_pct
     FROM appointments
     GROUP BY department
 )
@@ -49,19 +49,19 @@ JOIN attendance a USING (department)
 ORDER BY w.p90_wait_minutes DESC;
 
 -- name: pressure_by_weekday_hour
--- Operational pressure by weekday and hour
+-- Áp lực vận hành theo thứ và giờ
 SELECT
     weekday_name,
     appointment_hour,
     COUNT(*) AS appointments,
-    ROUND(AVG(CASE WHEN status = 'Completed' THEN wait_minutes END), 1) AS average_wait_minutes
+    ROUND(AVG(CASE WHEN status = 'Hoàn thành' THEN wait_minutes END), 1) AS average_wait_minutes
 FROM appointments
 GROUP BY weekday_name, appointment_hour
 HAVING COUNT(*) >= 30
 ORDER BY average_wait_minutes DESC, appointments DESC;
 
 -- name: department_hour_pressure
--- Department-hour slices with enough completed visits for a stable operational review
+-- Lát cắt chuyên khoa - khung giờ có đủ lượt hoàn thành để rà soát ổn định
 WITH completed AS (
     SELECT
         department,
@@ -72,7 +72,7 @@ WITH completed AS (
             ORDER BY wait_minutes
         ) AS cumulative_share
     FROM appointments
-    WHERE status = 'Completed'
+    WHERE status = 'Hoàn thành'
 )
 SELECT
     department,
@@ -86,12 +86,12 @@ HAVING COUNT(*) >= 50
 ORDER BY p90_wait_minutes DESC, completed_visits DESC;
 
 -- name: reminder_comparison
--- Descriptive reminder comparison (not a causal estimate)
+-- So sánh mô tả theo trạng thái nhắc hẹn, không phải ước lượng nhân quả
 SELECT
     reminder_sent,
     COUNT(*) AS eligible_appointments,
     ROUND(100.0 * AVG(no_show), 2) AS no_show_rate_pct
 FROM appointments
-WHERE status != 'Cancelled'
+WHERE status != 'Đã hủy'
 GROUP BY reminder_sent;
 

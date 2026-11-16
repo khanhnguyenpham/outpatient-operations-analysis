@@ -1,29 +1,28 @@
-# Data dictionary
+# Từ điển dữ liệu
 
-## Source and reporting view
+## Dữ liệu nguồn và view báo cáo
 
-| Column | Type | Definition |
+| Trường | Kiểu | Ý nghĩa |
 |---|---|---|
-| `appointment_id` | string | Unique synthetic appointment identifier |
-| `patient_id` | string | Hashed synthetic patient identifier; not a real person |
-| `appointment_date` | date | Local calendar date of the appointment |
-| `department` | category | Outpatient specialty |
-| `appointment_hour` | integer | Scheduled hour, from 07 to 16 |
-| `weekday_name` | category | English weekday name derived from appointment date |
-| `lead_days` | integer | Days between booking and appointment |
-| `prior_no_shows` | integer | Synthetic count known before the appointment |
-| `reminder_sent` | binary | 1 when a reminder was recorded, otherwise 0 |
-| `outside_city` | binary | 1 for the synthetic outside-city group |
-| `status` | category | `Completed`, `No-show`, or `Cancelled` |
-| `no_show` | binary | 1 only when status is `No-show` |
-| `wait_minutes` | decimal/null | Arrival-to-service interval for completed visits only |
+| `appointment_id` | chuỗi | Mã lịch hẹn mô phỏng, duy nhất |
+| `patient_id` | chuỗi | Mã người bệnh mô phỏng đã băm; không đại diện người thật |
+| `appointment_date` | ngày | Ngày hẹn theo lịch địa phương |
+| `department` | danh mục | Chuyên khoa ngoại trú |
+| `appointment_hour` | số nguyên | Giờ hẹn, từ 07 đến 16 |
+| `weekday_name` | danh mục | Tên thứ do thư viện ngày giờ sinh ra; dashboard chuyển sang tiếng Việt |
+| `lead_days` | số nguyên | Số ngày từ lúc đặt đến ngày hẹn |
+| `prior_no_shows` | số nguyên | Số lần vắng trước đó trong dữ liệu mô phỏng |
+| `reminder_sent` | nhị phân | 1 nếu ghi nhận đã gửi nhắc hẹn, ngược lại là 0 |
+| `outside_city` | nhị phân | 1 nếu thuộc nhóm mô phỏng ở ngoài thành phố |
+| `status` | danh mục | `Hoàn thành`, `Vắng hẹn` hoặc `Đã hủy` |
+| `no_show` | nhị phân | 1 khi và chỉ khi trạng thái là `Vắng hẹn` |
+| `wait_minutes` | số thập phân/rỗng | Số phút từ đến nơi đến bắt đầu phục vụ; chỉ có ở lượt hoàn thành |
 
-## Warehouse tables
+## Các bảng trong kho dữ liệu
 
-- `fact_appointment`: one row per appointment; stores measures, status and dimension keys.
-- `dim_date`: calendar fields for every appointment date.
-- `dim_department`: stable integer key and department name.
-- `appointments`: analyst-facing view joining the fact table to both dimensions.
+- `fact_appointment`: một dòng cho mỗi lịch hẹn, chứa số đo, trạng thái và khóa chiều.
+- `dim_date`: thuộc tính lịch của từng ngày hẹn.
+- `dim_department`: khóa số nguyên ổn định và tên chuyên khoa.
+- `appointments`: view dành cho phân tích, nối bảng sự kiện với hai bảng chiều.
 
-The model excludes patient names, phone numbers, addresses and clinical diagnoses because none are needed for the operational questions.
-
+Mô hình không chứa họ tên, số điện thoại, địa chỉ, bệnh án hoặc chẩn đoán vì các trường này không cần thiết cho câu hỏi vận hành.

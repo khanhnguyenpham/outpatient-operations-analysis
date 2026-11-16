@@ -1,14 +1,20 @@
-# Data model
+# Mô hình dữ liệu
 
-The generated SQLite database uses a small star schema rather than treating the source CSV as the reporting layer.
+Kho SQLite sử dụng mô hình sao nhỏ thay vì phân tích trực tiếp trên tệp CSV.
 
 ```text
 dim_date ───────────┐
-                    ├── fact_appointment ── appointments (reporting view)
+                    ├── fact_appointment ── appointments (view báo cáo)
 dim_department ─────┘
 ```
 
-`fact_appointment` stores one row per appointment and foreign keys to date and department dimensions. The `appointments` view exposes analyst-friendly names used by the SQL queries. The pipeline reconciles source, fact and view row counts and checks for orphan dimension keys every run.
+`fact_appointment` lưu một dòng cho mỗi lịch hẹn và tham chiếu đến chiều ngày, chiều chuyên khoa. View `appointments` trả lại tên trường dễ đọc để các truy vấn nghiệp vụ không phải lặp lại câu lệnh nối bảng.
 
-This model is deliberately small. Patient details are not modeled because the project uses synthetic identifiers and the business questions do not require a patient dimension.
+Ở mỗi lần chạy, quy trình kiểm tra:
 
+1. số dòng nguồn bằng số dòng bảng sự kiện;
+2. số dòng view báo cáo bằng số dòng nguồn;
+3. không có khóa ngày hoặc chuyên khoa mồ côi;
+4. các ràng buộc giờ hẹn, biến nhị phân, trạng thái và giá trị không âm được SQLite thực thi.
+
+Mô hình được giữ có chủ đích ở quy mô nhỏ. Không xây dựng chiều người bệnh vì đồ án chỉ dùng mã mô phỏng và câu hỏi nghiệp vụ không cần thuộc tính cá nhân.

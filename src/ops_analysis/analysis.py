@@ -45,7 +45,7 @@ def load_sqlite(frame: pd.DataFrame, database: Path) -> None:
                 prior_no_shows INTEGER NOT NULL CHECK (prior_no_shows >= 0),
                 reminder_sent INTEGER NOT NULL CHECK (reminder_sent IN (0, 1)),
                 outside_city INTEGER NOT NULL CHECK (outside_city IN (0, 1)),
-                status TEXT NOT NULL CHECK (status IN ('Completed', 'No-show', 'Cancelled')),
+                status TEXT NOT NULL CHECK (status IN ('Hoàn thành', 'Vắng hẹn', 'Đã hủy')),
                 no_show INTEGER NOT NULL CHECK (no_show IN (0, 1)),
                 wait_minutes REAL
             );
@@ -139,13 +139,13 @@ def validate_warehouse(database: Path, expected_rows: int) -> dict[str, int]:
         "orphan_departments": orphan_departments,
     }
     if fact_rows != expected_rows or view_rows != expected_rows or orphan_dates or orphan_departments:
-        raise ValueError(f"Warehouse reconciliation failed: {checks}")
+        raise ValueError(f"Đối soát kho dữ liệu không đạt: {checks}")
     return checks
 
 
 def calculate_kpis(frame: pd.DataFrame) -> dict[str, float | int]:
-    eligible = frame[frame["status"] != "Cancelled"]
-    completed = frame[frame["status"] == "Completed"]
+    eligible = frame[frame["status"] != "Đã hủy"]
+    completed = frame[frame["status"] == "Hoàn thành"]
     return {
         "appointments": len(frame),
         "completion_rate_pct": round(100 * len(completed) / len(eligible), 2),
@@ -160,14 +160,10 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
     preview_dir = report_dir.parents[1] / "docs" / "assets"
     preview_dir.mkdir(parents=True, exist_ok=True)
     kpis = calculate_kpis(frame)
-    completed = frame[frame["status"] == "Completed"]
+    completed = frame[frame["status"] == "Hoàn thành"]
     wait_by_department = completed.groupby("department")["wait_minutes"].median().sort_values(ascending=False)
     no_show_by_department = (
-        frame[frame["status"] != "Cancelled"]
-        .groupby("department")["no_show"]
-        .mean()
-        .mul(100)
-        .sort_values(ascending=False)
+        frame[frame["status"] != "Đã hủy"].groupby("department")["no_show"].mean().mul(100).sort_values(ascending=False)
     )
     data_quality = {
         "duplicate_appointment_ids": int(frame["appointment_id"].duplicated().sum()),
@@ -176,36 +172,36 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
     }
 
     ax = wait_by_department.sort_values().plot.barh(figsize=(8, 4), color="#2563eb")
-    ax.set(title="Median wait by department", xlabel="Minutes", ylabel="")
+    ax.set(title="Thời gian chờ trung vị theo chuyên khoa", xlabel="Phút", ylabel="")
     plt.tight_layout()
     plt.savefig(report_dir / "median_wait_by_department.png", dpi=150)
     plt.savefig(preview_dir / "median_wait_by_department.png", dpi=150)
     plt.close()
 
     lines = [
-        "# Generated analysis summary",
+        "# Tóm tắt phân tích được tạo tự động",
         "",
-        "This report is produced by `run_analysis.py` from the synthetic dataset.",
+        "Báo cáo được tạo bởi `run_analysis.py` từ bộ dữ liệu mô phỏng.",
         "",
-        "## Overall KPIs",
+        "## KPI tổng quan",
         "",
-        f"- Appointments: {kpis['appointments']:,}",
-        f"- Completion rate: {kpis['completion_rate_pct']}%",
-        f"- No-show rate: {kpis['no_show_rate_pct']}%",
-        f"- Median wait: {kpis['median_wait_minutes']} minutes",
-        f"- P90 wait: {kpis['p90_wait_minutes']} minutes",
+        f"- Tổng lịch hẹn: {kpis['appointments']:,}",
+        f"- Tỷ lệ hoàn thành: {kpis['completion_rate_pct']}%",
+        f"- Tỷ lệ vắng hẹn: {kpis['no_show_rate_pct']}%",
+        f"- Thời gian chờ trung vị: {kpis['median_wait_minutes']} phút",
+        f"- Thời gian chờ P90: {kpis['p90_wait_minutes']} phút",
         "",
-        "## Areas to review",
+        "## Nội dung cần rà soát",
         "",
-        f"- Highest median wait: {wait_by_department.index[0]} ({wait_by_department.iloc[0]:.1f} minutes).",
-        f"- Highest no-show rate: {no_show_by_department.index[0]} ({no_show_by_department.iloc[0]:.1f}%).",
-        "- These are descriptive signals. They should start an operational review, not automatically change staffing.",
+        f"- Chờ trung vị cao nhất: {wait_by_department.index[0]} ({wait_by_department.iloc[0]:.1f} phút).",
+        f"- Tỷ lệ vắng hẹn cao nhất: {no_show_by_department.index[0]} ({no_show_by_department.iloc[0]:.1f}%).",
+        "- Đây là tín hiệu mô tả để bắt đầu rà soát vận hành, không phải căn cứ tự động điều chỉnh nhân sự.",
         "",
-        "## Data quality checks",
+        "## Kiểm tra chất lượng dữ liệu",
         "",
-        f"- Duplicate appointment IDs: {data_quality['duplicate_appointment_ids']}",
-        f"- Missing department: {data_quality['missing_department']}",
-        f"- Completed visits missing wait time: {data_quality['missing_wait_completed']}",
+        f"- Mã lịch hẹn trùng: {data_quality['duplicate_appointment_ids']}",
+        f"- Thiếu chuyên khoa: {data_quality['missing_department']}",
+        f"- Lượt khám hoàn thành thiếu thời gian chờ: {data_quality['missing_wait_completed']}",
         "",
     ]
     (report_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")

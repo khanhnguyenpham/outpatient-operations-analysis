@@ -1,30 +1,29 @@
-# Project status
+# Trạng thái dự án
 
-## Completed
+## Đã hoàn thành
 
-- Reproducible generator for 6,500 synthetic appointments.
-- Row-level data validation and explicit operational rules.
-- SQLite star schema with date and department dimensions.
-- Source, fact and reporting-view reconciliation with orphan-key checks.
-- Named SQL queries for monthly movement, wait distributions, operational pressure and reminder comparison.
-- Streamlit dashboard with department/date filters, KPIs, trends and a demand heatmap.
-- Decision report with recommendations, limitations and Wilson intervals.
-- Ruff, pytest and GitHub Actions verification.
-- Portable demo-data bootstrap for a new laptop or Streamlit deployment.
+- Bộ sinh 6.500 lịch hẹn mô phỏng, tái tạo được bằng hạt giống cố định.
+- Kiểm tra chất lượng từng dòng và các quy tắc vận hành rõ ràng.
+- Kho SQLite dạng sao với chiều ngày, chiều chuyên khoa và view báo cáo.
+- Đối soát số dòng nguồn, bảng sự kiện, view và khóa ngoại mồ côi.
+- Truy vấn SQL cho xu hướng tháng, phân phối chờ, lát cắt áp lực và nhắc hẹn.
+- Dashboard tiếng Việt có bộ lọc, KPI, xu hướng, bản đồ nhiệt và kiểm soát dữ liệu.
+- Báo cáo quyết định có đề xuất, giới hạn và khoảng Wilson.
+- Kiểm tra tự động bằng Ruff, pytest và GitHub Actions.
+- Tự tạo hoặc nâng cấp dữ liệu demo khi chạy trên máy mới.
 
-## Current verified reference
+## Mốc tham chiếu đã xác minh
 
-- Overall appointments: 6,500.
-- No-show rate: 13.79%.
-- Median wait: 27.7 minutes.
-- P90 wait: 43.9 minutes.
-- Local test suite: 7 tests passing.
+- Tổng lịch hẹn: 6.500.
+- Tỷ lệ vắng hẹn: 13,79%.
+- Chờ trung vị: 27,7 phút.
+- Chờ P90: 43,9 phút.
+- Chuyên khoa có P90 cao nhất: Tim mạch, 50,5 phút.
 
-## Safe next steps
+## Bước tiếp theo an toàn
 
-1. Deploy `dashboard.py` on Streamlit Community Cloud and add the URL to `README.md`.
-2. Add a screenshot of the deployed dashboard if its layout differs materially from the current preview.
-3. Add a small sensitivity analysis for slice-size thresholds without changing the primary KPI definitions.
+1. Triển khai `dashboard.py` lên Streamlit Community Cloud và bổ sung đường dẫn vào `README.md`.
+2. Thêm ảnh chụp dashboard sau khi bản triển khai được kiểm tra trên màn hình laptop.
+3. Thử độ nhạy với ngưỡng số mẫu của lát cắt, không thay đổi định nghĩa KPI chính.
 
-Do not add machine learning to this repository; keep that work in the AI Systems project.
-
+Không thêm machine learning vào repository này. Phần đó thuộc đồ án AI Systems riêng để mỗi dự án giữ được câu chuyện tuyển dụng rõ ràng.
