@@ -16,6 +16,12 @@ Dữ liệu do [`src/ops_analysis/data.py`](src/ops_analysis/data.py) tạo bằ
 
 Các giả định và rủi ro khi chuyển sang dữ liệu thật được công khai trong [sổ đăng ký giả định](docs/assumptions.md).
 
+## Vị trí trong portfolio
+
+Đây là project chuyên về **Data Analyst**: bắt đầu từ câu hỏi nghiệp vụ, định nghĩa KPI, kiểm tra chất lượng, mô hình dữ liệu và SQL rồi mới đến dashboard. Project không thêm mô hình dự đoán để câu chuyện tuyển dụng không bị trộn với repository [AI Systems](https://github.com/khanhnguyenpham/hospital-appointment-risk-system). Phần Python backend và transaction được thể hiện riêng trong [Kho Gọn](https://github.com/khanhnguyenpham/inventory-order-management).
+
+Các mốc thay đổi của chính repository này được ghi theo ngày commit thật trong [CHANGELOG](CHANGELOG.md). Bối cảnh học tập 2022–2026 nằm trên [trang GitHub cá nhân](https://github.com/khanhnguyenpham).
+
 ## Kết quả chính
 
 - Tỷ lệ vắng hẹn chung là **13,79%**; mẫu số loại trừ lịch đã hủy.
@@ -110,6 +116,7 @@ scripts/              tạo dữ liệu tối thiểu cho website tĩnh
 - [Truy vấn SQL](sql/analysis.sql)
 - [Tiếp tục dự án trên laptop khác](docs/laptop_workflow.md)
 - [Trạng thái hiện tại của dự án](docs/project_status.md)
+- [Lịch phát triển](CHANGELOG.md)
 
 ![Thời gian chờ trung vị theo chuyên khoa](docs/assets/median_wait_by_department.png)
 
