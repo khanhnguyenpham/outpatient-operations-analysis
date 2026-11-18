@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ops_analysis.analysis import calculate_kpis
+from ops_analysis.analysis import calculate_kpis, create_report, data_quality_summary
 from ops_analysis.data import ensure_demo_dataset, generate_appointments, validate
 from ops_analysis.sql_runner import parse_named_queries
 
@@ -51,6 +51,24 @@ def test_invalid_wait_stage_total_is_reported():
     frame.loc[completed_index, "clinician_wait_minutes"] += 5
     errors = validate(frame)
     assert "tổng thời gian chờ theo công đoạn không khớp wait_minutes" in errors
+
+
+def test_data_quality_summary_is_machine_readable(tmp_path):
+    frame = generate_appointments(rows=100, seed=5)
+    summary = data_quality_summary(frame)
+    assert summary == {
+        "total_rows": 100,
+        "duplicate_appointment_ids": 0,
+        "missing_department": 0,
+        "missing_wait_completed": 0,
+        "stage_total_mismatch": 0,
+        "passed": True,
+    }
+
+    create_report(frame, tmp_path)
+    quality_report = pd.read_json(tmp_path / "data_quality.json", typ="series")
+    assert bool(quality_report["passed"]) is True
+    assert int(quality_report["total_rows"]) == 100
 
 
 def test_demo_dataset_is_created_once(tmp_path):

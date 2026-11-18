@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -181,6 +182,21 @@ def calculate_kpis(frame: pd.DataFrame) -> dict[str, float | int]:
     }
 
 
+def data_quality_summary(frame: pd.DataFrame) -> dict[str, int | bool]:
+    completed = frame[frame["status"] == "Hoàn thành"]
+    stage_columns = ["checkin_wait_minutes", "room_wait_minutes", "clinician_wait_minutes"]
+    stage_difference = completed[stage_columns].sum(axis=1) - completed["wait_minutes"]
+    checks = {
+        "total_rows": len(frame),
+        "duplicate_appointment_ids": int(frame["appointment_id"].duplicated().sum()),
+        "missing_department": int(frame["department"].isna().sum()),
+        "missing_wait_completed": int(completed["wait_minutes"].isna().sum()),
+        "stage_total_mismatch": int((stage_difference.abs() > 0.11).sum()),
+    }
+    checks["passed"] = all(value == 0 for key, value in checks.items() if key != "total_rows")
+    return checks
+
+
 def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | int]:
     report_dir.mkdir(parents=True, exist_ok=True)
     preview_dir = report_dir.parents[1] / "docs" / "assets"
@@ -191,11 +207,7 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
     no_show_by_department = (
         frame[frame["status"] != "Đã hủy"].groupby("department")["no_show"].mean().mul(100).sort_values(ascending=False)
     )
-    data_quality = {
-        "duplicate_appointment_ids": int(frame["appointment_id"].duplicated().sum()),
-        "missing_department": int(frame["department"].isna().sum()),
-        "missing_wait_completed": int(completed["wait_minutes"].isna().sum()),
-    }
+    data_quality = data_quality_summary(frame)
     stage_labels = {
         "checkin_wait_minutes": "tiếp nhận",
         "room_wait_minutes": "chờ vào phòng",
@@ -238,7 +250,12 @@ def create_report(frame: pd.DataFrame, report_dir: Path) -> dict[str, float | in
         f"- Mã lịch hẹn trùng: {data_quality['duplicate_appointment_ids']}",
         f"- Thiếu chuyên khoa: {data_quality['missing_department']}",
         f"- Lượt khám hoàn thành thiếu thời gian chờ: {data_quality['missing_wait_completed']}",
+        f"- Tổng ba công đoạn không khớp: {data_quality['stage_total_mismatch']}",
         "",
     ]
     (report_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    (report_dir / "data_quality.json").write_text(
+        json.dumps(data_quality, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     return kpis
