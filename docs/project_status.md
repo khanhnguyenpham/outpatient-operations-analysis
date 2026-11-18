@@ -16,6 +16,7 @@
 - Báo cáo quyết định có đề xuất, giới hạn và khoảng Wilson.
 - Kiểm tra tự động bằng Ruff, pytest và GitHub Actions.
 - Tự tạo hoặc nâng cấp dữ liệu demo khi chạy trên máy mới.
+- Báo cáo chất lượng dữ liệu dạng JSON để CI và công cụ khác có thể đọc trực tiếp.
 
 ## Mốc tham chiếu đã xác minh
 

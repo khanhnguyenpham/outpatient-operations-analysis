@@ -2,6 +2,12 @@
 
 Tài liệu này tóm tắt các mốc đã có trong lịch sử Git. Ngày bên dưới phản ánh ngày commit thực tế, không phải ngày hồi tưởng.
 
+## [1.1.0] - 2026-11-18
+
+- Tách kiểm tra chất lượng thành hàm dùng lại được.
+- Xuất `data_quality.json` gồm số dòng, dữ liệu trùng/thiếu, đối soát công đoạn và trạng thái đạt.
+- Bổ sung test cho báo cáo máy đọc được.
+
 ## [1.0.1] - 2026-11-18
 
 - Bổ sung bối cảnh của project trong portfolio và liên kết lịch phát triển.

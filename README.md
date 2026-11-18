@@ -91,6 +91,8 @@ python scripts/build_static_site.py
 
 Bộ kiểm thử bao phủ quy tắc dữ liệu, mẫu số KPI, nâng cấp dữ liệu demo cũ, đối soát kho dữ liệu và khả năng thực thi của toàn bộ truy vấn nghiệp vụ. GitHub Actions chạy lại các bước này sau mỗi lần cập nhật mã nguồn.
 
+Sau mỗi lần chạy, `reports/generated/data_quality.json` lưu số dòng, mã lịch hẹn trùng, trường thiếu và sai lệch giữa tổng ba công đoạn với thời gian chờ. Tệp này giúp CI hoặc công cụ khác đọc kết quả kiểm tra mà không phải phân tích báo cáo Markdown.
+
 ## Cấu trúc thư mục
 
 ```text
